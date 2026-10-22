@@ -573,3 +573,54 @@ body.pointer {
 .timeline li.active span {
   text-shadow: 0 0 10px var(--message);
 }
+
+/* Trust & Privacy: step indicator above the page and caption below it */
+.label.steps {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  font-size: 11px;
+}
+
+.label.steps span {
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: var(--muted);
+  opacity: 0.55;
+}
+
+.label.steps span.active {
+  color: var(--bg);
+  background: var(--privacy);
+  opacity: 1;
+  font-weight: 700;
+}
+
+.label.steps span.done {
+  color: var(--ok);
+  opacity: 0.9;
+}
+
+.label.steps span.done::after {
+  content: " ✓";
+}
+
+.label.caption {
+  white-space: normal;
+  width: 340px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 6px 10px;
+}
+
+@media (max-width: 800px) {
+  .label.steps {
+    font-size: 9px;
+  }
+
+  .label.caption {
+    width: 240px;
+    font-size: 10px;
+  }
+}

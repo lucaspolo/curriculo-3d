@@ -248,6 +248,40 @@ export function createPrivacy() {
   // The first draw may use a fallback font; measure again once Inter is ready so overlays line up.
   document.fonts?.load(`${BODY_FONT}px Inter`).then(() => render(drawnMode));
 
+  // Step indicator above the page and a caption below it: the page names each phase as it happens.
+  const STEP_NAMES = ["Classificação", "NER", "LLM", "Anonimização"];
+  const stepper = label("", "steps");
+  stepper.position.set(0, PAGE_H / 2 + 0.95, 0.05);
+  page.add(stepper);
+  const stepEls = STEP_NAMES.map((name, i) => {
+    const el = document.createElement("span");
+    el.textContent = `${i + 1} ${name}`;
+    stepper.element.append(el);
+    return el;
+  });
+  let shownStep = null;
+  const setStep = (i) => {
+    if (i === shownStep) return;
+    shownStep = i;
+    stepEls.forEach((el, k) => {
+      el.classList.toggle("active", k === i);
+      el.classList.toggle("done", k < i);
+    });
+  };
+  const caption = label("", "caption");
+  caption.position.set(0, -PAGE_H / 2 - 0.25, 0.05);
+  caption.center.set(0.5, 0);
+  page.add(caption);
+  const setCaption = (text) => {
+    if (caption.element.textContent !== text) caption.element.textContent = text;
+  };
+  const frame = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.PlaneGeometry(PAGE_W + 0.12, PAGE_H + 0.12)),
+    new THREE.LineBasicMaterial({ color: glow(COLORS.message, 2), toneMapped: false, transparent: true, opacity: 0 }),
+  );
+  frame.position.z = 0.03;
+  page.add(frame);
+
   // Classification stamp and the LLM orb next to the page
   const stamp = label("", "tag");
   stamp.position.set(PAGE_W / 2 - 0.1, PAGE_H / 2 + 0.05, 0.05);
@@ -290,8 +324,8 @@ export function createPrivacy() {
   scanner.visible = false;
   page.add(scanner);
   const curtain = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.06, PAGE_H + 0.3),
-    new THREE.MeshBasicMaterial({ color: glow(COLORS.ok, 2.4), toneMapped: false }),
+    new THREE.PlaneGeometry(0.05, PAGE_H + 0.3),
+    new THREE.MeshBasicMaterial({ color: glow(COLORS.ok, 1.5), toneMapped: false }),
   );
   curtain.position.z = 0.04;
   curtain.visible = false;
@@ -357,14 +391,16 @@ export function createPrivacy() {
   });
 
   // Timeline of one page
+  // Each phase ends with a short pause (BEAT) so the change can be read before the next one starts.
+  const BEAT = 0.8;
   const PHASES = [
-    { name: "enter", dur: 0.9 },
-    { name: "classify", dur: 1.4 },
-    { name: "ner", dur: 4.4 },
-    { name: "llm", dur: 1.7 * AMBIGUOUS.length },
-    { name: "anonymize", dur: 1.6 },
-    { name: "hold", dur: 3.5 },
-    { name: "exit", dur: 1.2 },
+    { name: "enter", dur: 1.2, step: -1, caption: "Chega um documento novo ao pipeline." },
+    { name: "classify", dur: 2.4 + BEAT, step: 0, caption: "1 · Classificação: este documento tem dados pessoais? Tem, então segue para o NER." },
+    { name: "ner", dur: 5 + BEAT, step: 1, caption: "2 · NER: lê o texto e marca nomes, CPFs, endereços e telefones. O que é ambíguo fica em lilás." },
+    { name: "llm", dur: 2.4 * AMBIGUOUS.length + BEAT, step: 2, caption: "3 · LLM: olha o contexto dos trechos ambíguos." },
+    { name: "anonymize", dur: 2.4 + BEAT, step: 3, caption: "4 · Anonimização: os dados pessoais viram marcadores; o resto do texto fica." },
+    { name: "hold", dur: 4, step: 4, caption: "Pronto: a decisão continua pública, os dados pessoais não." },
+    { name: "exit", dur: 1.2, step: 4, caption: "O documento segue para a plataforma, junto com milhões de outros." },
   ];
   let phase = 0;
   let phaseT = 0;
@@ -386,6 +422,10 @@ export function createPrivacy() {
     scanner.visible = false;
     curtain.visible = false;
     probe.visible = false;
+    frame.material.opacity = 0;
+    setStep(-1);
+    setCaption(PHASES[0].caption);
+    cascade.highlight(-1);
     page.position.copy(PAGE_POS);
     page.scale.setScalar(0.85);
     if (drawnMode !== "original") render("original");
@@ -398,9 +438,12 @@ export function createPrivacy() {
     probe.visible = false;
     page.position.copy(PAGE_POS);
     page.scale.setScalar(1);
+    setStep(4);
+    frame.material.opacity = 0;
     if (mode === "original") {
       render("original");
       setStamp("original", COLORS.danger);
+      setCaption("O original, com tudo o que foi marcado: é isto que a anonimização protege.");
     } else {
       render("anon");
       ENTITIES.forEach((e) => {
@@ -410,6 +453,7 @@ export function createPrivacy() {
         o.bar.visible = false;
       });
       setStamp("anonimizado ✓", COLORS.ok);
+      setCaption(PHASES.find((p) => p.name === "hold").caption);
     }
   }
 
@@ -417,22 +461,34 @@ export function createPrivacy() {
     const p = PHASES[phase];
     phaseT += dt;
     const k = Math.min(1, phaseT / p.dur);
+    // Progress of the phase's own animation; it finishes before the trailing pause.
+    const a = Math.min(1, phaseT / Math.max(0.01, p.dur - (p.name === "enter" || p.name === "hold" || p.name === "exit" ? 0 : BEAT)));
+    setStep(p.step);
+    if (p.name !== "llm") setCaption(p.caption);
+    cascade.highlight(p.step >= 0 && p.step <= 2 ? p.step : -1);
 
     if (p.name === "enter") {
       page.scale.setScalar(0.85 + 0.15 * k);
     } else if (p.name === "classify") {
-      if (!stamp.visible && k > 0.3) setStamp("contém dados pessoais", COLORS.message);
+      // The whole page is examined at once: its frame pulses, then the verdict is stamped.
+      frame.material.opacity = a < 1 ? 0.5 + 0.5 * Math.sin(phaseT * 9) : 0.25;
+      if (a < 0.55) setStamp("classificando…", COLORS.message);
+      else setStamp("contém dados pessoais", COLORS.message);
     } else if (p.name === "ner") {
-      scanner.visible = k < 1;
-      const y = THREE.MathUtils.lerp(scanTop, scanBottom, k);
+      frame.material.opacity = 0;
+      scanner.visible = a < 1;
+      const y = THREE.MathUtils.lerp(scanTop, scanBottom, a);
       scanner.position.y = y;
       rects.forEach((r, e) => {
         if (state.get(e) === "idle" && toLocalY(r.y + r.h / 2) > y) setEntity(e, "found");
       });
     } else if (p.name === "llm") {
-      const slot = Math.min(AMBIGUOUS.length - 1, Math.floor(k * AMBIGUOUS.length));
-      const local = k * AMBIGUOUS.length - slot;
+      const slot = Math.min(AMBIGUOUS.length - 1, Math.floor(a * AMBIGUOUS.length));
+      const local = a >= 1 ? 1 : a * AMBIGUOUS.length - slot;
       const e = AMBIGUOUS[slot];
+      const verdict = e.llm.keep ? "mantém" : TYPES[e.llm.type].name;
+      const passage = e.text.replace(/[“”]/g, "");
+      setCaption(local < 0.5 ? `3 · LLM: e “${passage}”? Olhando o contexto…` : `3 · LLM: “${passage}” → ${verdict}: ${e.llm.note}.`);
       const r = rects.get(e);
       target.set(toLocalX(r.x + r.w / 2), toLocalY(r.y + r.h / 2), 0.1);
       // First half: a probe travels from the LLM to the passage; then the verdict lands.
@@ -444,8 +500,8 @@ export function createPrivacy() {
     } else if (p.name === "anonymize") {
       probe.visible = false;
       orb.scale.setScalar(1);
-      curtain.visible = k < 1;
-      const x = THREE.MathUtils.lerp(-PAGE_W / 2 - 0.1, PAGE_W / 2 + 0.1, k);
+      curtain.visible = a < 1;
+      const x = THREE.MathUtils.lerp(-PAGE_W / 2 - 0.1, PAGE_W / 2 + 0.1, a);
       curtain.position.x = x;
       rects.forEach((r, e) => {
         if (!finalType(e)) return;
@@ -459,7 +515,7 @@ export function createPrivacy() {
           tint.material.opacity = 0;
         }
       });
-      if (k >= 1) showFinal("anon");
+      if (a >= 1 && drawnMode !== "anon") showFinal("anon");
     } else if (p.name === "exit") {
       // The page shrinks and drops into the cascade behind it, then a new one starts.
       const e = k * k;

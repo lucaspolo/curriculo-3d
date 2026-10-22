@@ -62,7 +62,7 @@ export function createCascade(group, pickables) {
     group.add(tubeMesh);
   });
 
-  GATES.forEach((g) => {
+  const gates = GATES.map((g) => {
     const geo = new THREE.BoxGeometry(0.3, g.h, 1.6);
     const gate = new THREE.Mesh(
       geo,
@@ -80,7 +80,9 @@ export function createCascade(group, pickables) {
     l.position.set(0, g.h / 2 + 0.45, 0);
     gate.add(l);
     pickable(pickables, gate, { title: g.name, text: g.text });
+    return { gate, lit: 0 };
   });
+  let litGate = -1;
 
   const scale = label("escala: dezenas de milhões de documentos por dia", "small");
   scale.position.set(10, 10, Z);
@@ -121,12 +123,21 @@ export function createCascade(group, pickables) {
 
   return {
     input: INPUT,
+    /** Lights the gate matching the step the foreground page is in (0 classification, 1 NER, 2 LLM). */
+    highlight(i) {
+      litGate = i;
+    },
     /** Adds one document; `lane` forces its path (the showcased page always ends up in the LLM lane). */
     emit(lane = pickLane()) {
       if (items.length >= MAX) return;
       items.push({ lane, t: 0, wobble: Math.random() * Math.PI * 2 });
     },
     update(dt, time, focus) {
+      gates.forEach((g, i) => {
+        g.lit = Math.max(i === litGate ? 1 : 0, g.lit - dt * 2);
+        g.gate.material.opacity = 0.12 + g.lit * 0.3;
+        g.gate.scale.setScalar(1 + g.lit * 0.12);
+      });
       spawn += dt * RATE * focus;
       while (spawn > 1) {
         spawn--;
