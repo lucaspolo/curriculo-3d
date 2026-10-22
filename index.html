@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lucas Polo · Engenheiro de Software</title>
+    <meta
+      name="description"
+      content="Lucas Polo, engenheiro de software sênior: 15 anos em sistemas de backend e de dados, com Kafka, Spark, Airflow, Kubernetes e LLMs em produção."
+    />
+    <meta name="theme-color" content="#060a13" />
+  </head>
+  <body>
+    <canvas id="stage" aria-hidden="true"></canvas>
+    <div id="labels" aria-hidden="true"></div>
+    <div id="tooltip" role="status" hidden></div>
+
+    <nav class="dots" aria-label="Seções">
+      <a href="#inicio" data-dot="0" aria-label="Início"></a>
+      <a href="#kafka" data-dot="1" aria-label="Pipelines com Kafka"></a>
+      <a href="#privacidade" data-dot="2" aria-label="Trust &amp; Privacy"></a>
+      <a href="#llm" data-dot="3" aria-label="LLMs em produção"></a>
+      <a href="#kubernetes" data-dot="4" aria-label="Kubernetes e Google Cloud"></a>
+      <a href="#magalu" data-dot="5" aria-label="Magazine Luiza"></a>
+      <a href="#porto" data-dot="6" aria-label="Porto Seguro"></a>
+      <a href="#origens" data-dot="7" aria-label="Origens"></a>
+      <a href="#contato" data-dot="8" aria-label="Contato"></a>
+    </nav>
+
+    <main id="content">
+      <section id="inicio" class="panel hero" data-station="hero">
+        <div class="card">
+          <p class="eyebrow">São Paulo · Brasil</p>
+          <h1>Lucas Polo</h1>
+          <p class="role">Engenheiro de software sênior · <strong>Jusbrasil</strong></p>
+          <p class="lead">
+            15 anos construindo sistemas de backend e de dados: pipelines que processam dezenas de milhões de
+            documentos por dia, serviços com milhões de requisições e LLMs em produção.
+          </p>
+          <ul class="chips">
+            <li>Python</li><li>Go</li><li>Scala</li><li>Java</li><li>Kafka</li><li>Spark</li><li>Airflow</li>
+            <li>Kubernetes</li><li>GCP</li><li>LLMs</li>
+          </ul>
+          <p class="hint"><span class="mouse" aria-hidden="true"></span> Role a página para viajar pelas cenas</p>
+        </div>
+      </section>
+
+      <section id="kafka" class="panel" data-station="kafka">
+        <div class="card">
+          <p class="eyebrow">Jusbrasil · jan 2022 – atual</p>
+          <h2>Pipelines de dados com Kafka</h2>
+          <p>
+            Engenharia de backend e de dados na plataforma que ingere e serve a informação jurídica pública do Brasil.
+            Normalização, classificação e Trust &amp; Privacy formam um pipeline: cada etapa consome um tópico do
+            Kafka, faz o seu trabalho e publica no próximo.
+          </p>
+          <ul class="facts">
+            <li><strong>Dezenas de milhões</strong> de processos e documentos por dia</li>
+            <li>Normalização e classificação de dados de processos</li>
+            <li>Orquestração com <strong>Airflow</strong>, processamento distribuído com <strong>Spark</strong>, análise com Pandas</li>
+            <li>Python, Scala, Java, JavaScript e Go</li>
+          </ul>
+          <p class="try">Clique num produtor para publicar uma rajada de mensagens.</p>
+        </div>
+      </section>
+
+      <section id="privacidade" class="panel" data-station="privacy">
+        <div class="card">
+          <p class="eyebrow">Jusbrasil · Trust &amp; Privacy</p>
+          <h2>Proteção de dados pessoais</h2>
+          <p>
+            Pipelines e mecanismos que protegem dados pessoais combinando classificação de dados, reconhecimento de
+            entidades nomeadas (NER) e LLMs, em dezenas de milhões de documentos por dia.
+          </p>
+          <ul class="facts">
+            <li><span class="swatch s-class"></span><strong>Classificação</strong> separa o que tem dado pessoal</li>
+            <li><span class="swatch s-ner"></span><strong>NER</strong> encontra nomes, CPFs, endereços e telefones</li>
+            <li><span class="swatch s-llm"></span><strong>LLM</strong> decide os casos ambíguos pelo contexto</li>
+          </ul>
+          <p class="aside">
+            Na cena, um processo fictício: a Criatura processa o Dr. Victor Frankenstein por pensão alimentícia e pede
+            a proteção dos seus dados.
+          </p>
+          <p class="try">Passe o mouse sobre os trechos marcados para ver cada decisão.</p>
+          <button type="button" class="action" data-action="privacy:compare" aria-pressed="false">
+            Comparar com o original
+          </button>
+        </div>
+      </section>
+
+      <section id="llm" class="panel" data-station="llm">
+        <div class="card">
+          <p class="eyebrow">Jusbrasil · IA generativa</p>
+          <h2>LLMs em produção, em três frentes</h2>
+          <div class="tabs" role="tablist" aria-label="Frentes de LLM">
+            <button type="button" role="tab" data-tab="0" aria-selected="true">Pipeline</button>
+            <button type="button" role="tab" data-tab="1" aria-selected="false" tabindex="-1">Produto</button>
+            <button type="button" role="tab" data-tab="2" aria-selected="false" tabindex="-1">Código</button>
+          </div>
+          <ul class="facts">
+            <li><strong>Pipelines de ingestão</strong> com etapas de LLM que transformam texto em dados estruturados</li>
+            <li><strong>Agentes no produto</strong>, que chamam ferramentas e respondem citando a fonte</li>
+            <li><strong>Agentes de código</strong> no fluxo de desenvolvimento, com revisão humana</li>
+          </ul>
+          <p>Formações em LangChain, agentes de IA e engenharia de prompt (Alura, 2025).</p>
+          <p class="try">As abas trocam a frente; sem clique, elas se alternam sozinhas.</p>
+        </div>
+      </section>
+
+      <section id="kubernetes" class="panel" data-station="k8s">
+        <div class="card">
+          <p class="eyebrow">Jusbrasil · infraestrutura</p>
+          <h2>Kubernetes e Google Cloud</h2>
+          <p>
+            O cluster onde tudo isso roda, publicado com as ferramentas do Google Cloud e atendendo
+            <strong>milhões de requisições por dia</strong>. Cada tipo de carga escala pelo seu motivo.
+          </p>
+          <ul class="facts">
+            <li><strong>front</strong> e <strong>api</strong> escalam com as requisições; o front é Next.js</li>
+            <li><strong>pipeline</strong> escala pelo lag dos tópicos do Kafka</li>
+            <li><strong>jobs</strong> pontuais e agendados rodam até terminar</li>
+            <li>Deploy gradual, canário com rollback automático e réplicas em duas zonas</li>
+          </ul>
+          <p class="try">Clique num pod para derrubá-lo e veja o Kubernetes recriar.</p>
+          <div class="actions">
+            <button type="button" class="action" data-action="k8s:deploy">Fazer deploy</button>
+            <button type="button" class="action danger" data-action="k8s:baddeploy">Deploy com bug</button>
+            <button type="button" class="action secondary" data-action="k8s:job">Rodar um job</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="magalu" class="panel" data-station="magalu">
+        <div class="card">
+          <p class="eyebrow">Magazine Luiza · dez 2018 – jan 2022</p>
+          <h2>Cálculo de frete em escala</h2>
+          <p>
+            De desenvolvedor a desenvolvedor sênior em sistemas críticos com Python, C#, Node.js e Go, em Kubernetes
+            sobre Google Cloud, AWS e Azure.
+          </p>
+          <ul class="facts">
+            <li>Sistema de cálculo de frete da Magalu e dos parceiros do marketplace, com <strong>milhões de requisições por dia</strong></li>
+            <li>Integrações resilientes com Correios, Bling e AnyMarket</li>
+            <li>Ferramentas para sellers: etiquetas, Magalu Entregas e rateio de frete</li>
+            <li>Operação em picos como a Black Friday</li>
+          </ul>
+          <p class="try">Os caminhões saem do centro de distribuição quando lotam. Na Black Friday, veja a fila de pacotes disparar.</p>
+          <button type="button" class="action" data-action="magalu:blackfriday" aria-pressed="false">
+            Simular Black Friday
+          </button>
+        </div>
+      </section>
+
+      <section id="porto" class="panel" data-station="porto">
+        <div class="card">
+          <p class="eyebrow">Porto Seguro · jul 2011 – dez 2018</p>
+          <h2>Da proposta à apólice</h2>
+          <p>
+            Sete anos e meio como analista de sistemas na emissão de apólices de seguro: pipelines que recebiam a
+            proposta e, ao final, emitiam a apólice.
+          </p>
+          <ul class="facts">
+            <li>Análise e desenvolvimento em <strong>Java</strong> e <strong>Informix 4GL</strong></li>
+            <li>Bancos relacionais Informix e Oracle</li>
+            <li>Modelagem de dados e engenharia de sistemas</li>
+          </ul>
+          <p class="try">Acompanhe um cliente: ele entrega a proposta e sai de carro com a apólice emitida.</p>
+        </div>
+      </section>
+
+      <section id="origens" class="panel" data-station="origins">
+        <div class="card">
+          <p class="eyebrow">De onde eu vim</p>
+          <h2>Do ferro de solda ao software</h2>
+          <ul class="timeline">
+            <li><span>2006</span> Técnico em programação no IFSP</li>
+            <li><span>2008</span> Montagem e solda de circuitos eletrônicos na Luxxel</li>
+            <li><span>2010</span> Recenseador do IBGE, de porta em porta</li>
+            <li><span>2011</span> Estágio em sites móveis com PHP e MySQL na Mobint</li>
+            <li><span>2015</span> Bacharelado em Sistemas de Informação, Anhanguera</li>
+            <li><span>2018</span> Extensão em Estatística Aplicada, FMU</li>
+            <li><span>2026</span> Pós em Engenharia de Redes de Telecomunicações, Estácio</li>
+          </ul>
+          <p>Radioamador nas horas vagas: o sinal ainda me interessa tanto quanto o código.</p>
+        </div>
+      </section>
+
+      <section id="contato" class="panel" data-station="overview">
+        <div class="card">
+          <p class="eyebrow">Visão geral</p>
+          <h2>Vamos conversar?</h2>
+          <ul class="links">
+            <li><a href="https://www.linkedin.com/in/lucaspolo" rel="noopener">LinkedIn</a></li>
+            <li><a href="https://github.com/lucaspolo" rel="noopener">GitHub</a></li>
+            <li><a href="https://blog.lucaspolo.dev/" rel="noopener">Blog</a></li>
+            <li><span class="mail">contato [at] lucaspolo.dev</span></li>
+          </ul>
+          <h3>Certificações</h3>
+          <ul class="certs">
+            <li>Kafka: produtores, consumidores e streams <span>Alura · 2022</span></li>
+            <li>Apache Airflow: orquestrando pipelines de dados <span>Alura · 2022</span></li>
+            <li>Kubernetes for Developers: Core Concepts <span>Pluralsight · 2022</span></li>
+            <li>Rust Fundamentals <span>Pluralsight · 2022</span></li>
+            <li>Formação LangChain: aplicações de IA generativa <span>Alura · 2025</span></li>
+            <li>Engenharia de Prompt <span>Alura · 2025</span></li>
+            <li>Next.js com Postgres e Prisma <span>Alura · 2026</span></li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <noscript><p class="noscript">As animações precisam de JavaScript; o currículo acima continua completo.</p></noscript>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

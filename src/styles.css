@@ -1,0 +1,554 @@
+:root {
+  --bg: #060a13;
+  --panel: rgba(9, 15, 28, 0.72);
+  --panel-border: rgba(120, 160, 220, 0.16);
+  --text: #e6edf7;
+  --muted: #93a3bb;
+  --kafka: #2de2c5;
+  --message: #ffb347;
+  --privacy: #ff4f8b;
+  --llm: #a48bff;
+  --k8s: #4d9bff;
+  --ok: #4ade80;
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* Phone only: fraction of the screen height where a card's top edge stops. main.js reads it too. */
+  --read-line: 0.58;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* One topic per scroll gesture: the page always comes to rest on a section. */
+  scroll-snap-type: y mandatory;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+#labels {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Without WebGL the canvas never draws, so the page falls back to a plain readable resume. */
+.no-webgl #stage,
+.no-webgl #labels {
+  display: none;
+}
+
+#content {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.panel {
+  scroll-snap-align: center;
+  /* Stops a fast flick from skipping topics. */
+  scroll-snap-stop: always;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 10vh 0 10vh clamp(16px, 5vw, 72px);
+}
+
+.card {
+  pointer-events: auto;
+  width: min(460px, 38vw);
+  padding: 28px 30px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.hero .card {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding-left: 0;
+  width: min(560px, 44vw);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  line-height: 1.1;
+  margin: 0 0 14px;
+}
+
+h1 {
+  font-size: clamp(44px, 6vw, 84px);
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: clamp(26px, 2.6vw, 34px);
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: 18px;
+  margin-top: 22px;
+}
+
+p {
+  margin: 0 0 14px;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kafka);
+  margin-bottom: 10px;
+}
+
+.role {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--text);
+}
+
+.lead {
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.chips,
+.facts,
+.timeline,
+.links,
+.certs {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 28px;
+}
+
+.chips li {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: rgba(45, 226, 197, 0.06);
+}
+
+.facts li {
+  position: relative;
+  padding-left: 18px;
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+
+.facts li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--message);
+  box-shadow: 0 0 10px var(--message);
+}
+
+.facts li:has(.swatch)::before {
+  display: none;
+}
+
+.facts strong,
+.timeline strong {
+  color: var(--text);
+}
+
+.swatch {
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.s-class {
+  background: var(--message);
+}
+
+.s-ner {
+  background: var(--privacy);
+}
+
+.s-llm {
+  background: var(--llm);
+}
+
+.try {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--kafka);
+  margin: 18px 0 0;
+}
+
+.hint {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mouse {
+  width: 18px;
+  height: 28px;
+  border: 2px solid var(--muted);
+  border-radius: 10px;
+  position: relative;
+}
+
+.mouse::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  width: 2px;
+  height: 6px;
+  margin-left: -1px;
+  background: var(--kafka);
+  border-radius: 1px;
+  animation: wheel 1.6s ease-in-out infinite;
+}
+
+@keyframes wheel {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(9px);
+    opacity: 0;
+  }
+}
+
+.timeline li {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--panel-border);
+  color: var(--muted);
+}
+
+.timeline span {
+  font-family: var(--font-mono);
+  color: var(--message);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  font-size: 17px;
+}
+
+a {
+  color: var(--kafka);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: #fff;
+}
+
+.mail {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.certs li {
+  padding: 5px 0;
+  font-size: 14px;
+  border-bottom: 1px dashed var(--panel-border);
+}
+
+.certs span {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.action {
+  pointer-events: auto;
+  margin-top: 10px;
+  font: 600 14px var(--font-mono);
+  color: var(--bg);
+  background: var(--message);
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(255, 179, 71, 0.35);
+}
+
+.action[aria-pressed="true"] {
+  background: var(--privacy);
+  box-shadow: 0 0 28px rgba(255, 79, 139, 0.5);
+}
+
+.action:focus-visible,
+a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+/* Section dots */
+.dots {
+  position: fixed;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dots a {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+  background: transparent;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.dots a.active {
+  background: var(--kafka);
+  border-color: var(--kafka);
+  transform: scale(1.3);
+}
+
+/* 3D labels (CSS2DRenderer) */
+.label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  background: rgba(6, 10, 19, 0.7);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  white-space: nowrap;
+  transition: opacity 0.3s;
+}
+
+.label.small {
+  font-size: 10px;
+  padding: 1px 6px;
+}
+
+.label.plain {
+  background: none;
+  border: 0;
+  color: var(--muted);
+}
+
+.label.tag {
+  font-weight: 700;
+  font-size: 10px;
+  color: var(--bg);
+  border: 0;
+}
+
+.label.alert {
+  color: var(--privacy);
+  border-color: var(--privacy);
+}
+
+#tooltip {
+  position: fixed;
+  z-index: 4;
+  max-width: 280px;
+  pointer-events: none;
+  padding: 10px 12px;
+  background: rgba(6, 10, 19, 0.92);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+#tooltip strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+body.pointer {
+  cursor: pointer;
+}
+
+.noscript {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* Phones and narrow windows: the scene takes the top, the card sits at the bottom. */
+@media (max-width: 800px) {
+  body {
+    font-size: 15px;
+  }
+
+  .panel {
+    min-height: 120vh;
+    scroll-snap-align: none;
+    align-items: flex-end;
+    padding: 50vh 16px 8vh;
+  }
+
+  /* On phones the card is the snap target: its top stops at the read line, the scene stays above it. */
+  .card {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    scroll-margin-top: calc(var(--read-line) * 100vh);
+  }
+
+  .card,
+  .hero .card {
+    width: 100%;
+    padding: 20px;
+  }
+
+  .hero .card {
+    background: var(--panel);
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .dots {
+    right: 6px;
+    gap: 9px;
+  }
+
+  .dots a {
+    width: 7px;
+    height: 7px;
+  }
+
+  .label {
+    font-size: 10px;
+  }
+
+  /* Secondary labels (topic names, years, node names) only clutter a phone-sized scene. */
+  .label.small {
+    visibility: hidden;
+  }
+}
+
+.label.muted-by-stage {
+  opacity: 0 !important;
+}
+
+.aside {
+  font-size: 14px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0 16px;
+  padding: 4px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: rgba(6, 10, 19, 0.5);
+}
+
+.tabs button {
+  flex: 1;
+  font: 600 13px var(--font-mono);
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  padding: 8px 6px;
+  cursor: pointer;
+}
+
+.tabs button[aria-selected="true"] {
+  color: var(--bg);
+  background: var(--llm);
+}
+
+.tabs button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.action.danger {
+  background: var(--privacy);
+  box-shadow: 0 0 24px rgba(255, 79, 139, 0.35);
+}
+
+.action.secondary {
+  background: var(--ok);
+  box-shadow: 0 0 24px rgba(74, 222, 128, 0.3);
+}
