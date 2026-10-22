@@ -1,6 +1,7 @@
 // Small building blocks shared by every station: colors, labels, outlined boxes, tubes and flowing messages.
 import * as THREE from "three";
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 
 export const COLORS = {
   kafka: 0x2de2c5,
@@ -26,27 +27,91 @@ export function label(text, className = "") {
   return new CSS2DObject(el);
 }
 
-/** Dark solid box with glowing edges: the default look for services and nodes. */
-export function outlinedBox(w, h, d, color, { fill = COLORS.steel, opacity = 1 } = {}) {
-  const geo = new THREE.BoxGeometry(w, h, d);
-  const body = new THREE.Mesh(
+const roundedCache = new Map();
+/**
+ * Box with rounded corners. Geometries are cached because many objects share a size, so never
+ * translate or otherwise mutate the result in place: clone() it first.
+ */
+export function roundedBox(w, h, d, radius = Math.min(w, h, d) * 0.18, segments = 3) {
+  const key = `${w}|${h}|${d}|${radius}|${segments}`;
+  if (!roundedCache.has(key)) roundedCache.set(key, new RoundedBoxGeometry(w, h, d, segments, radius));
+  return roundedCache.get(key);
+}
+
+const _size = new THREE.Vector3();
+const _center = new THREE.Vector3();
+/**
+ * Glowing silhouette for rounded shapes, which have no hard edges for EdgesGeometry to draw: a slightly
+ * larger copy of the mesh rendered from the inside (inverted hull). Returns the hull, whose
+ * material.color can be changed like the old edge lines.
+ */
+export function outline(mesh, color, { thickness = 0.045, material } = {}) {
+  const geo = mesh.geometry;
+  if (!geo.boundingBox) geo.computeBoundingBox();
+  geo.boundingBox.getSize(_size);
+  geo.boundingBox.getCenter(_center);
+  const hull = new THREE.Mesh(
     geo,
+    material ?? new THREE.MeshBasicMaterial({ color: glow(color, 1.6), side: THREE.BackSide, toneMapped: false }),
+  );
+  const sx = 1 + (2 * thickness) / _size.x;
+  const sy = 1 + (2 * thickness) / _size.y;
+  const sz = 1 + (2 * thickness) / _size.z;
+  hull.scale.set(sx, sy, sz);
+  // Scale around the geometry's center, not its origin, so off-center geometries stay aligned.
+  hull.position.set(_center.x * (1 - sx), _center.y * (1 - sy), _center.z * (1 - sz));
+  mesh.add(hull);
+  return hull;
+}
+
+/** Hull material for objects that share one outline color (e.g. a car's body and cabin). */
+export const outlineMaterial = (color) =>
+  new THREE.MeshBasicMaterial({ color: glow(color, 1.6), side: THREE.BackSide, toneMapped: false });
+
+const panelMat = new THREE.MeshStandardMaterial({ color: 0x0b111d, roughness: 0.4, metalness: 0.5 });
+const ventMat = new THREE.MeshBasicMaterial({ color: 0x24324a });
+
+/** Front of an appliance: an inset panel, a row of status LEDs and vent slits. */
+function frontPanel(body, w, h, d, color) {
+  const panel = new THREE.Mesh(roundedBox(w * 0.86, h * 0.62, 0.04, Math.min(w, h) * 0.06, 2), panelMat);
+  panel.position.z = d / 2 + 0.005;
+  body.add(panel);
+  const r = Math.min(w, h) * 0.045;
+  const led = new THREE.SphereGeometry(r, 10, 8);
+  const ledMat = new THREE.MeshBasicMaterial({ color: glow(color, 2.4), toneMapped: false });
+  for (let i = 0; i < 3; i++) {
+    const l = new THREE.Mesh(led, ledMat);
+    l.position.set(w * 0.34 - i * r * 3.2, h * 0.16, d / 2 + 0.03);
+    body.add(l);
+  }
+  const slit = new THREE.PlaneGeometry(w * 0.32, Math.max(0.025, h * 0.025));
+  for (let i = 0; i < 4; i++) {
+    const v = new THREE.Mesh(slit, ventMat);
+    v.position.set(-w * 0.2, h * 0.18 - i * h * 0.1, d / 2 + 0.026);
+    body.add(v);
+  }
+  body.userData.leds = ledMat;
+}
+
+/**
+ * Dark rounded box with a glowing silhouette: the default look for services and nodes. With
+ * `details` it also gets a front panel with LEDs, so it reads as a machine rather than a block.
+ */
+export function outlinedBox(w, h, d, color, { fill = COLORS.steel, opacity = 1, details = true, radius } = {}) {
+  const body = new THREE.Mesh(
+    roundedBox(w, h, d, radius),
     new THREE.MeshStandardMaterial({
       color: fill,
-      roughness: 0.55,
-      metalness: 0.3,
+      roughness: 0.45,
+      metalness: 0.35,
       emissive: color,
       emissiveIntensity: 0.08,
       transparent: opacity < 1,
       opacity,
     }),
   );
-  const edges = new THREE.LineSegments(
-    new THREE.EdgesGeometry(geo),
-    new THREE.LineBasicMaterial({ color: glow(color, 1.6), toneMapped: false }),
-  );
-  body.add(edges);
-  body.userData.edges = edges;
+  body.userData.edges = outline(body, color);
+  if (details) frontPanel(body, w, h, d, color);
   return body;
 }
 

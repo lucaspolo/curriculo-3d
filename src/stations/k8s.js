@@ -2,7 +2,7 @@
 // (web load, Kafka lag, schedules); the visitor can deploy, deploy a bad build (canary + rollback),
 // run a one-off job, or knock a pod down and watch it come back.
 import * as THREE from "three";
-import { COLORS, glow, label, pickable, Flow } from "../lib/kit.js";
+import { COLORS, glow, label, pickable, Flow, roundedBox, outline } from "../lib/kit.js";
 
 const SLOTS_X = Array.from({ length: 10 }, (_, i) => -9 + i * 2); // x < 0 is zone a, x > 0 zone b
 const INGRESS = new THREE.Vector3(0, 1.2, 10.5);
@@ -41,16 +41,11 @@ export function createK8s() {
 
   // Cluster floor, zones and namespace bands
   const floor = new THREE.Mesh(
-    new THREE.BoxGeometry(28, 0.3, 17.5),
+    roundedBox(28, 0.3, 17.5, 0.14),
     new THREE.MeshStandardMaterial({ color: 0x0c1525, roughness: 0.8, emissive: COLORS.k8s, emissiveIntensity: 0.02 }),
   );
   floor.position.set(0, -0.15, 0.5);
-  floor.add(
-    new THREE.LineSegments(
-      new THREE.EdgesGeometry(floor.geometry),
-      new THREE.LineBasicMaterial({ color: glow(COLORS.k8s, 1.1), toneMapped: false }),
-    ),
-  );
+  outline(floor, COLORS.k8s, { thickness: 0.06 }).material.color.multiplyScalar(0.7);
   group.add(floor);
   const header = label("GKE · Google Cloud");
   header.position.set(0, 0.4, -8.6);
@@ -88,18 +83,27 @@ export function createK8s() {
   const byKey = Object.fromEntries(namespaces.map((n) => [n.key, n]));
 
   // Pod slots
-  const podGeo = new THREE.BoxGeometry(1.2, 1.2, 1.2);
+  const podGeo = roundedBox(1.2, 1.2, 1.2, 0.22);
+  const slotGeo = roundedBox(0.62, 0.1, 0.05, 0.02, 2);
+  const slotMat = new THREE.MeshStandardMaterial({ color: 0x0d1626, metalness: 0.5, roughness: 0.4 });
+  const ledGeo = new THREE.SphereGeometry(0.07, 10, 8);
   namespaces.forEach((ns) => {
     SLOTS_X.forEach((x) => {
       const mesh = new THREE.Mesh(
         podGeo,
         new THREE.MeshStandardMaterial({ color: COLORS.steel, emissive: ns.color, emissiveIntensity: 0.3, roughness: 0.4 }),
       );
-      const edges = new THREE.LineSegments(
-        new THREE.EdgesGeometry(podGeo),
-        new THREE.LineBasicMaterial({ color: glow(ns.color, 1.6), toneMapped: false }),
-      );
-      mesh.add(edges);
+      const edges = outline(mesh, ns.color, { thickness: 0.05 });
+      // Vent slits on the front and a status light that follows the pod state.
+      [0.16, -0.02, -0.2].forEach((y) => {
+        const slot = new THREE.Mesh(slotGeo, slotMat);
+        slot.position.set(-0.12, y, 0.6);
+        mesh.add(slot);
+      });
+      const led = new THREE.Mesh(ledGeo, new THREE.MeshBasicMaterial({ toneMapped: false }));
+      led.position.set(0.38, 0.32, 0.6);
+      mesh.add(led);
+      edges.userData.led = led;
       mesh.position.set(x, 0.7, ns.z);
       mesh.scale.setScalar(0.001);
       mesh.visible = false;
@@ -184,7 +188,7 @@ export function createK8s() {
   };
 
   const queue = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 0.6, 1.4).translate(-0.5, 0, 0),
+    roundedBox(1, 0.6, 1.4, 0.12).clone().translate(-0.5, 0, 0),
     new THREE.MeshStandardMaterial({ color: COLORS.steel, emissive: COLORS.privacy, emissiveIntensity: 0.5 }),
   );
   queue.position.set(-10.2, 0.4, byKey.pipeline.z);
@@ -424,6 +428,7 @@ export function createK8s() {
           s.mesh.scale.setScalar(sc + s.hits * 0.1 + (s.mesh.userData.hovered && s.state === "running" ? 0.1 : 0));
           const c = podColor(s);
           s.edges.material.color.copy(c);
+          s.edges.userData.led.material.color.copy(c).multiplyScalar(1.6);
           s.mesh.material.emissive.copy(c);
           s.mesh.material.emissiveIntensity = 0.12 + s.hits * 0.3;
         }),

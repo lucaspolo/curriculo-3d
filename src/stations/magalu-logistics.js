@@ -1,7 +1,7 @@
 // Logistics for the Magalu scene: a distribution center turns orders into packages, trucks at the docks
 // fill up, leave when full, deliver, and back into the dock again.
 import * as THREE from "three";
-import { COLORS, glow, label, outlinedBox, pickable } from "../lib/kit.js";
+import { COLORS, glow, label, outlinedBox, pickable, roundedBox } from "../lib/kit.js";
 
 const CD = { x: 7, z: 3, w: 4.6, d: 3.5, h: 2.4 };
 const DOCK_Z = CD.z + CD.d / 2; // front wall of the building, where the trailers back in
@@ -29,9 +29,23 @@ const ground = (pts) => new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE
 // Truck parts are built with +z as forward, so Object3D.lookAt points the cab along the road.
 function makeTruck() {
   const truck = new THREE.Group();
-  const cab = outlinedBox(1.25, 1.1, 1.0, COLORS.k8s);
+  const cab = outlinedBox(1.25, 1.1, 1.0, COLORS.k8s, { details: false, radius: 0.16 });
   cab.position.set(0, 0.85, 1.35);
   truck.add(cab);
+  // Windshield, side windows and a grille, so the cab reads as a cab.
+  const glass = new THREE.MeshStandardMaterial({ color: 0x0b1424, roughness: 0.15, metalness: 0.8, emissive: 0x16304f });
+  const windshield = new THREE.Mesh(new THREE.PlaneGeometry(1.02, 0.42), glass);
+  windshield.position.set(0, 0.2, 0.505);
+  cab.add(windshield);
+  [-1, 1].forEach((side) => {
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.36), glass);
+    w.position.set(side * 0.63, 0.2, 0.05);
+    w.rotation.y = side * Math.PI / 2;
+    cab.add(w);
+  });
+  const grille = new THREE.Mesh(roundedBox(0.8, 0.22, 0.06, 0.03, 2), new THREE.MeshStandardMaterial({ color: 0x2a3446, metalness: 0.7, roughness: 0.3 }));
+  grille.position.set(0, -0.25, 0.51);
+  cab.add(grille);
   const trailerGeo = new THREE.BoxGeometry(1.4, 1.4, 2.7);
   const trailer = new THREE.Mesh(
     trailerGeo,
@@ -80,13 +94,23 @@ function makeTruck() {
 }
 
 export function createLogistics(group, pickables) {
-  const box = new THREE.BoxGeometry(0.46, 0.46, 0.46);
+  const box = roundedBox(0.46, 0.46, 0.46, 0.05, 2);
   const boxMat = new THREE.MeshStandardMaterial({ color: 0xc49a6c, roughness: 0.8, emissive: 0x3a2410 });
 
   // Distribution center
-  const building = outlinedBox(CD.w, CD.h, CD.d, COLORS.message);
+  const building = outlinedBox(CD.w, CD.h, CD.d, COLORS.message, { details: false, radius: 0.2 });
   building.position.set(CD.x, CD.h / 2, CD.z);
   group.add(building);
+  // A row of lit windows above the docks and a roof unit, so it reads as a warehouse.
+  const windowMat = new THREE.MeshBasicMaterial({ color: glow(COLORS.warn, 0.9), toneMapped: false });
+  for (let i = 0; i < 5; i++) {
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.22), windowMat);
+    w.position.set(-CD.w / 2 + 0.6 + i * 0.85, CD.h / 2 - 0.4, CD.d / 2 + 0.01);
+    building.add(w);
+  }
+  const roofUnit = new THREE.Mesh(roundedBox(1.2, 0.4, 0.8, 0.08, 2), new THREE.MeshStandardMaterial({ color: 0x3a4458, metalness: 0.6, roughness: 0.4 }));
+  roofUnit.position.set(1, CD.h / 2 + 0.2, -0.6);
+  building.add(roofUnit);
   const cdLabel = label("Centro de distribuição");
   cdLabel.position.set(0, CD.h / 2 + 0.9, 0);
   building.add(cdLabel);

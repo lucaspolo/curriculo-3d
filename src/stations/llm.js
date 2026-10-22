@@ -1,7 +1,7 @@
 // LLM scene: one model serving three fronts, each shown as a concrete vignette (llm-vignettes.js).
 // The card has tabs; the camera slides between the panels and cycles on its own when left alone.
 import * as THREE from "three";
-import { COLORS, glow, label, pickable, Flow, damp } from "../lib/kit.js";
+import { COLORS, glow, label, pickable, Flow, damp, outlinedBox } from "../lib/kit.js";
 import { CW, CH, VIGNETTES, TOOLS } from "./llm-vignettes.js";
 
 const PANEL_W = 9;
@@ -113,18 +113,8 @@ export function createLlm() {
   const toolY = PANEL_Y - PANEL_H / 2 - 0.8;
   const tools = TOOLS.map((tool, i) => {
     const x = (i - 1) * 3;
-    const geo = new THREE.BoxGeometry(2.4, 0.7, 0.7);
-    const mesh = new THREE.Mesh(
-      geo,
-      new THREE.MeshStandardMaterial({ color: COLORS.steel, emissive: COLORS.message, emissiveIntensity: 0.05 }),
-    );
+    const mesh = outlinedBox(2.4, 0.7, 0.7, COLORS.message);
     mesh.position.set(PANEL_X[1] + x, toolY, 0.6);
-    mesh.add(
-      new THREE.LineSegments(
-        new THREE.EdgesGeometry(geo),
-        new THREE.LineBasicMaterial({ color: glow(COLORS.message, 1.2), toneMapped: false }),
-      ),
-    );
     group.add(mesh);
     const name = tool.call.slice(0, tool.call.indexOf("("));
     const l = label(name, "small");

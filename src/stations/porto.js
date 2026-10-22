@@ -1,7 +1,7 @@
 // Porto Seguro scene: the policy issuance pipeline. A customer drives up, hands in the proposal, follows it
 // through the stages and drives off with the issued policy. Informix and Oracle answer every stage.
 import * as THREE from "three";
-import { COLORS, glow, label, pickable, Flow } from "../lib/kit.js";
+import { COLORS, glow, label, pickable, Flow, roundedBox, outline, outlineMaterial } from "../lib/kit.js";
 
 const ROAD_Z = 4.6;
 const BELT_Y = 1.45;
@@ -107,7 +107,7 @@ function makeTerminal() {
     new THREE.MeshBasicMaterial({ map: texture, toneMapped: false }),
   );
   const bezel = new THREE.Mesh(
-    new THREE.BoxGeometry(8.6, 4.6, 0.5),
+    roundedBox(8.6, 4.6, 0.5, 0.2),
     new THREE.MeshStandardMaterial({ color: 0x1a2232, roughness: 0.6, metalness: 0.2 }),
   );
   bezel.position.z = -0.27;
@@ -210,15 +210,45 @@ function makeDoc() {
 function makeCar() {
   const car = new THREE.Group();
   const bodyMat = new THREE.MeshStandardMaterial({ color: COLORS.steel, roughness: 0.4, metalness: 0.4, emissiveIntensity: 0.35 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(2, 0.55, 1.05), bodyMat);
+  const body = new THREE.Mesh(roundedBox(2, 0.55, 1.05, 0.2), bodyMat);
   body.position.y = 0.55;
   car.add(body);
-  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.45, 0.95), bodyMat);
-  cabin.position.set(-0.15, 1.05, 0);
+  const cabin = new THREE.Mesh(roundedBox(1.05, 0.5, 0.95, 0.2), bodyMat);
+  cabin.position.set(-0.15, 1.02, 0);
   car.add(cabin);
-  const edgeMat = new THREE.LineBasicMaterial({ toneMapped: false });
-  body.add(new THREE.LineSegments(new THREE.EdgesGeometry(body.geometry), edgeMat));
-  cabin.add(new THREE.LineSegments(new THREE.EdgesGeometry(cabin.geometry), edgeMat));
+  // One hull material for body and cabin, recolored per customer.
+  const edgeMat = outlineMaterial(COLORS.text);
+  outline(body, 0, { thickness: 0.04, material: edgeMat });
+  outline(cabin, 0, { thickness: 0.04, material: edgeMat });
+  // Windows all around the cabin, plus bumpers.
+  const glass = new THREE.MeshStandardMaterial({ color: 0x0b1424, roughness: 0.15, metalness: 0.8, emissive: 0x16304f });
+  const side = new THREE.PlaneGeometry(0.8, 0.3);
+  [-1, 1].forEach((s) => {
+    const w = new THREE.Mesh(side, glass);
+    w.position.set(0, 0.02, s * 0.478);
+    if (s < 0) w.rotation.y = Math.PI;
+    cabin.add(w);
+  });
+  const front = new THREE.Mesh(new THREE.PlaneGeometry(0.78, 0.3), glass);
+  front.position.set(0.527, 0.02, 0);
+  front.rotation.y = Math.PI / 2;
+  cabin.add(front);
+  const rear = front.clone();
+  rear.position.x = -0.527;
+  rear.rotation.y = -Math.PI / 2;
+  cabin.add(rear);
+  const bumperMat = new THREE.MeshStandardMaterial({ color: 0x2a3446, metalness: 0.7, roughness: 0.3 });
+  [-1, 1].forEach((s) => {
+    const bumper = new THREE.Mesh(roundedBox(0.12, 0.14, 1, 0.05, 2), bumperMat);
+    bumper.position.set(s * 1.02, 0.4, 0);
+    car.add(bumper);
+  });
+  const tail = new THREE.Mesh(
+    new THREE.BoxGeometry(0.04, 0.1, 0.8),
+    new THREE.MeshBasicMaterial({ color: glow(COLORS.danger, 1.6), toneMapped: false }),
+  );
+  tail.position.set(-1.01, 0.62, 0);
+  car.add(tail);
   const wheelGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.16, 14);
   wheelGeo.rotateX(Math.PI / 2);
   const wheelMat = new THREE.MeshStandardMaterial({ color: 0x05070c, roughness: 0.8 });
@@ -277,7 +307,7 @@ export function createPorto() {
     group.add(dash);
   }
   const belt = new THREE.Mesh(
-    new THREE.BoxGeometry(BELT_START * -2 + 1, 0.2, 1.3),
+    roundedBox(BELT_START * -2 + 1, 0.2, 1.3, 0.08, 2),
     new THREE.MeshStandardMaterial({ color: 0x141d2e, roughness: 0.7, metalness: 0.3 }),
   );
   belt.position.set(0, BELT_Y - 0.82, 0);

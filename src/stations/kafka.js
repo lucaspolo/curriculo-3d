@@ -1,7 +1,7 @@
 // Kafka scene: a chained pipeline. Each stage consumes one topic, does its job and publishes to the next,
 // so normalization, classification and Trust & Privacy are linked only through Kafka.
 import * as THREE from "three";
-import { COLORS, glow, label, outlinedBox, tube, path, pickable, Flow } from "../lib/kit.js";
+import { COLORS, glow, label, outlinedBox, roundedBox, tube, path, pickable, Flow } from "../lib/kit.js";
 
 const ROW_A = 5;
 const ROW_B = -5;
@@ -109,7 +109,7 @@ export function createKafka() {
     group.add(l);
 
     const logs = new THREE.InstancedMesh(
-      new THREE.BoxGeometry(STEP * 0.84, 0.8, 0.8),
+      roundedBox(STEP * 0.84, 0.8, 0.8, 0.08, 2),
       new THREE.MeshBasicMaterial({ toneMapped: false }),
       PARTITIONS * SEGMENTS,
     );
