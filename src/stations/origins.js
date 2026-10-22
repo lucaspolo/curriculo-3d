@@ -1,7 +1,8 @@
 // Origins scene: a workbench with one object per phase, lit up in chronological order. Hovering an object
 // (or its line in the card's timeline) jumps to it; otherwise the spotlight walks the desk on its own.
 import * as THREE from "three";
-import { COLORS, glow, label, pickable, damp } from "../lib/kit.js";
+import { COLORS, glow, label, pickable, damp, roundedBox, outline } from "../lib/kit.js";
+import * as details from "./origins-details.js";
 
 const DWELL = 3.4; // seconds the spotlight stays on each object
 const HOVER_HOLD = 2.5; // seconds the hovered object keeps the spotlight after the pointer leaves
@@ -24,7 +25,8 @@ const POSTS = [
 ];
 
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.1, ...extra });
-const box = (w, h, d, material) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+// Every solid on the desk gets softened corners; thin parts get a proportionally small radius.
+const box = (w, h, d, material) => new THREE.Mesh(roundedBox(w, h, d, Math.min(w, h, d) * 0.22, 2), material);
 const font = (w, s, mono) => `${w} ${s}px ${mono ? "'JetBrains Mono', monospace" : "Inter, system-ui, sans-serif"}`;
 
 function screen(pxW, pxH, w, h) {
@@ -318,7 +320,7 @@ function statsBoard() {
   board.position.y = 1.55;
   board.rotation.x = -0.12;
   root.add(board);
-  board.add(new THREE.LineSegments(new THREE.EdgesGeometry(board.geometry), new THREE.LineBasicMaterial({ color: 0x8a95a8 })));
+  outline(board, 0, { thickness: 0.03, material: new THREE.MeshBasicMaterial({ color: 0x8a95a8, side: THREE.BackSide }) });
   [-1.2, 1.2].forEach((x) => {
     const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 1.6, 8), mat(0x5c4630));
     leg.position.set(x, 0.75, 0.15);
@@ -624,17 +626,21 @@ function justiceScale() {
 
 const OBJECTS = [
   // Front row
-  { year: "2006", short: "Técnico em programação", col: 0, row: 0, build: books, text: "Técnico em programação no IFSP: o primeiro contato com lógica e código." },
+  { year: "2006", short: "Técnico em programação", col: 0, row: 0, build: books,
+    details: details.booksDetails, text: "Técnico em programação no IFSP: o primeiro contato com lógica e código." },
   {
     year: "2008",
     short: "Solda e montagem de circuitos",
     col: 1,
     row: 0,
     build: solderingBench,
+    details: details.solderingDetails,
     text: "Primeiro emprego, na Luxxel: soldagem e montagem de circuitos eletrônicos e testes de reatores.",
   },
-  { year: "2010", short: "Recenseador do IBGE", col: 2, row: 0, build: clipboard, text: "Recenseador do IBGE em Itapemirim (ES), de porta em porta. Dados coletados um a um." },
-  { year: "2011", short: "Sites móveis na Mobint", col: 3, row: 0, build: oldPhone, text: "Estágio na Mobint: sites móveis com PHP (CodeIgniter) e MySQL." },
+  { year: "2010", short: "Recenseador do IBGE", col: 2, row: 0, build: clipboard,
+    details: details.clipboardDetails, text: "Recenseador do IBGE em Itapemirim (ES), de porta em porta. Dados coletados um a um." },
+  { year: "2011", short: "Sites móveis na Mobint", col: 3, row: 0, build: oldPhone,
+    details: details.phoneDetails, text: "Estágio na Mobint: sites móveis com PHP (CodeIgniter) e MySQL." },
   // Middle row
   {
     year: "2011",
@@ -642,6 +648,7 @@ const OBJECTS = [
     col: 0,
     row: 1,
     build: portoCar,
+    details: details.carDetails,
     scene: "porto",
     text: "Analista de sistemas na Porto Seguro (jul 2011 – dez 2018): o pipeline da proposta à apólice, em Java e Informix 4GL. Clique para ver a cena.",
   },
@@ -651,6 +658,7 @@ const OBJECTS = [
     col: 1,
     row: 1,
     build: diploma,
+    details: details.diplomaDetails,
     text: "Bacharelado em Sistemas de Informação na Anhanguera, cursado enquanto trabalhava na Porto Seguro.",
   },
   {
@@ -660,6 +668,7 @@ const OBJECTS = [
     row: 1,
     tall: true,
     build: statsBoard,
+    details: details.boardDetails,
     text: "Extensão em Estatística Aplicada na FMU. Depois, de 2022 a 2024, Matemática na UNINTER (não concluído).",
   },
   {
@@ -668,6 +677,7 @@ const OBJECTS = [
     col: 3,
     row: 1,
     build: deliveryTruck,
+    details: details.truckDetails,
     scene: "magalu",
     text: "Desenvolvedor e depois desenvolvedor sênior no Magazine Luiza (dez 2018 – jan 2022): o cálculo de frete em escala. Clique para ver a cena.",
   },
@@ -679,6 +689,7 @@ const OBJECTS = [
     row: 2,
     tall: true,
     build: justiceScale,
+    details: details.scaleDetails,
     scene: "kafka",
     text: "Engenheiro de software sênior no Jusbrasil (desde jan 2022): pipelines com Kafka, proteção de dados, LLMs e Kubernetes. Clique para ver as cenas.",
   },
@@ -689,6 +700,7 @@ const OBJECTS = [
     row: 2,
     tall: true,
     build: radio,
+    details: details.radioDetails,
     text: "Radioamador, com um projeto de simulados para a prova da Anatel. Em 2026, pós em Engenharia de Redes de Telecomunicações (Estácio).",
   },
   {
@@ -698,6 +710,7 @@ const OBJECTS = [
     row: 2,
     tall: true,
     build: laptop,
+    details: details.laptopDetails,
     text: "blog.lucaspolo.dev: anotações sobre o que estou aprendendo, de Python e Java a cálculo lambda e estatística.",
   },
 ].map((o) => ({ ...o, x: COLUMNS[o.col], z: ROWS[o.row] }));
@@ -709,8 +722,9 @@ export function createOrigins() {
   // Desk
   const top = box(DESK_W, 0.4, DESK_D, mat(0x2a1f18, { roughness: 0.75 }));
   top.position.y = -0.2;
-  top.add(new THREE.LineSegments(new THREE.EdgesGeometry(top.geometry), new THREE.LineBasicMaterial({ color: 0x6b4a2b })));
+  outline(top, 0, { thickness: 0.05, material: new THREE.MeshBasicMaterial({ color: 0x6b4a2b, side: THREE.BackSide }) });
   group.add(top);
+  details.decorateDesk(top, group, DESK_W, DESK_D);
   [-1, 1].forEach((sx) =>
     [-1, 1].forEach((sz) => {
       const leg = box(0.4, 6, 0.4, mat(0x1e1611));
@@ -720,7 +734,7 @@ export function createOrigins() {
   );
 
   // A warm lamp and a ring on the desk follow the active object.
-  const lamp = new THREE.PointLight(0xffd9a0, 40, 18, 2);
+  const lamp = new THREE.PointLight(0xffd9a0, 30, 18, 2);
   lamp.position.set(0, 4, 1);
   group.add(lamp);
   const spot = new THREE.Mesh(
@@ -737,6 +751,19 @@ export function createOrigins() {
 
   const items = OBJECTS.map((o, i) => {
     const obj = o.build();
+    // Extra details (origins-details.js) may bring their own animation; run it alongside the object's.
+    const extra = o.details?.(obj.root);
+    if (extra) {
+      const { play, idle } = obj;
+      obj.play = (k, dt, time) => {
+        play(k, dt, time);
+        extra.play?.(k, dt, time);
+      };
+      obj.idle = () => {
+        idle();
+        extra.idle?.();
+      };
+    }
     obj.root.position.x += o.x;
     obj.root.userData.baseX = obj.root.position.x;
     obj.root.position.z += o.z;

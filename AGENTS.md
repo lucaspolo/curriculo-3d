@@ -57,7 +57,8 @@ src/wheel-step.js     um gesto de roda/trackpad = um tópico (desktop)
 src/stage.js          renderer, bloom, câmera guiada pelo scroll, picking e tooltip
 src/lib/progress.js   matemática pura do scroll (testada em tests/)
 src/lib/kit.js        cores, rótulos, caixas com borda, tubos e Flow (mensagens nos tubos)
-src/stations/*.js     uma cena por arquivo (partes grandes à parte: magalu-logistics, privacy-cascade, llm-vignettes)
+src/stations/*.js     uma cena por arquivo (partes grandes à parte: magalu-logistics, privacy-cascade,
+                      llm-vignettes, origins-details com os detalhes de cada objeto da bancada)
 tests/                node --test
 ```
 
@@ -137,7 +138,8 @@ de LLM, também são ilustrativos: os nomes de etapa, ferramenta e tópico (`ext
 `buscar_processo`, `decisoes.estruturadas`), os campos do JSON, a issue, o diff e o PR. Elas continuam o
 caso Frankenstein. Na cena de Kubernetes, os nomes de namespace, pod, job e CronJob, as versões e as
 taxas de erro do canário são ilustrativos. Na bancada de "De onde eu vim", o contador de domicílios do IBGE e o site
-`m.exemplo` no celular são ilustrativos; os títulos de post no notebook são reais (do blog) e devem
+`m.exemplo` no celular, os títulos das lombadas, a tela do PDA, as fórmulas do quadro e a folha de
+simulado da Anatel são ilustrativos (o PDA em si é fiel: o Censo 2010 foi coletado com eles); os títulos de post no notebook são reais (do blog) e devem
 acompanhar o blog se ele mudar. Já as práticas mostradas (escala por lag, deploy gradual,
 canário com rollback, jobs pontuais e agendados, réplicas em duas zonas) foram confirmadas pelo Lucas. Que a Porto tinha pipelines da proposta
 até a emissão da apólice veio do próprio Lucas, não do LinkedIn. Não descrevem sistemas reais das empresas. Mantenha assim:
