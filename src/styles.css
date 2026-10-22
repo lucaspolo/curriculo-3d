@@ -624,3 +624,53 @@ body.pointer {
     font-size: 10px;
   }
 }
+
+/* Opening constellation: each star leads with what the phase was about, then where and when */
+.label.hub {
+  text-align: center;
+  padding: 3px 9px;
+}
+
+.label.hub strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.label.hub span {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.label.hub.main strong {
+  font-size: 16px;
+}
+
+@media (max-width: 800px) {
+  .label.hub strong {
+    font-size: 10px;
+  }
+
+  .label.hub.main strong {
+    font-size: 12px;
+  }
+
+  .label.hub span {
+    display: none;
+  }
+}
+
+.label.caption.focus {
+  width: 440px;
+  font-size: 13px;
+  border-color: rgba(45, 226, 197, 0.35);
+}
+
+@media (max-width: 800px) {
+  .label.caption.focus {
+    width: 260px;
+    font-size: 10px;
+  }
+}

@@ -4,16 +4,41 @@
 import * as THREE from "three";
 import { COLORS, glow, label, pickable, Flow, roundedBox, outline, damp } from "../lib/kit.js";
 
-// Chronological order: the trajectory line follows it around the ring.
+// Chronological order, which the trajectory follows. `ring` places each phase on an orbit:
+// 0 = professional experience (center, biggest), 1 = education, 2 = hobbies and others (periphery).
 const HUBS = [
-  { id: "eletronica", name: "Eletrônica", years: "2008", color: COLORS.warn, scene: "origens", text: "Montagem e solda de circuitos na Luxxel: o começo, antes do código." },
-  { id: "mobint", name: "Mobint", years: "2011", color: 0x7d8fb0, scene: "origens", text: "Estágio em sites móveis com PHP e MySQL." },
-  { id: "porto", name: "Porto Seguro", years: "2011–2018", color: COLORS.k8s, scene: "porto", text: "Emissão de apólices, da proposta à apólice, em Java e Informix 4GL sobre Informix e Oracle." },
-  { id: "estatistica", name: "Estatística", years: "2018", color: COLORS.privacy, scene: "origens", text: "Extensão em Estatística Aplicada (FMU) e, depois, Matemática (UNINTER)." },
-  { id: "magalu", name: "Magazine Luiza", years: "2018–2022", color: COLORS.message, scene: "magalu", text: "Cálculo de frete em escala, com Python, C#, Node.js e Go em Kubernetes." },
-  { id: "jusbrasil", name: "Jusbrasil", years: "2022–hoje", color: COLORS.kafka, scene: "kafka", text: "Pipelines com Kafka, proteção de dados, LLMs em produção e Kubernetes." },
-  { id: "radio", name: "Radioamador e Telecom", years: "", color: COLORS.llm, scene: "origens", text: "Hobby, pós em Redes de Telecomunicações e um projeto de simulados para a prova da Anatel." },
-  { id: "blog", name: "Blog", years: "hoje", color: COLORS.ok, scene: "origens", text: "Anotações sobre o que estou aprendendo, de Python e Java a estatística." },
+  { id: "ifsp", role: "Lógica e programação", where: "IFSP · 2006", ring: 1, color: 0x8fa8ff, scene: "origens", text: "Técnico em programação no IFSP: o primeiro contato com lógica e código." },
+  { id: "eletronica", role: "Montagem de circuitos", where: "Luxxel · 2008", ring: 2, color: COLORS.warn, scene: "origens", text: "Primeiro emprego: soldagem e montagem de circuitos eletrônicos e testes de reatores." },
+  { id: "mobint", role: "Sites móveis", where: "Mobint · 2011", ring: 0, color: 0x7d8fb0, scene: "origens", text: "Estágio desenvolvendo sites móveis com PHP (CodeIgniter) e MySQL." },
+  { id: "porto", role: "Emissão de apólices", where: "Porto Seguro · 2011–2018", ring: 0, color: COLORS.k8s, scene: "porto", text: "Sete anos e meio em sistemas de emissão de apólices: pipelines da proposta à apólice, em Java e Informix 4GL sobre Informix e Oracle." },
+  { id: "si", role: "Sistemas de Informação", where: "Anhanguera · 2015", ring: 1, color: 0xb39bff, scene: "origens", text: "Bacharelado em Sistemas de Informação, cursado enquanto trabalhava na Porto Seguro." },
+  { id: "estatistica", role: "Estatística e matemática", where: "FMU · UNINTER · 2018–2024", ring: 1, color: COLORS.privacy, scene: "origens", text: "Extensão em Estatística Aplicada (FMU) e Matemática na UNINTER (não concluído)." },
+  { id: "magalu", role: "Frete em escala", where: "Magazine Luiza · 2018–2022", ring: 0, color: COLORS.message, scene: "magalu", text: "Cálculo de frete da Magalu e do marketplace, com milhões de requisições por dia, integrações resilientes com parceiros e operação na Black Friday." },
+  { id: "jusbrasil", role: "Dados, privacidade e LLMs", where: "Jusbrasil · 2022–hoje", ring: 0, color: COLORS.kafka, scene: "kafka", text: "Pipelines que processam dezenas de milhões de documentos por dia, proteção de dados pessoais com NER e LLMs, e agentes em produção." },
+  { id: "telecom", role: "Redes de telecomunicações", where: "Pós · Estácio · 2026", ring: 1, color: COLORS.llm, scene: "origens", text: "Pós-graduação em Engenharia de Redes de Telecomunicações." },
+  { id: "radio", role: "Radioamador", where: "hobby", ring: 2, color: 0xff9f68, scene: "origens", text: "Radioamador, com um projeto de simulados para a prova da Anatel." },
+  { id: "blog", role: "Escrevo o que aprendo", where: "Blog · hoje", ring: 2, color: COLORS.ok, scene: "origens", text: "No blog, anotações sobre o que estou aprendendo: Python, Java, bancos de dados, algoritmos e estatística." },
+];
+
+// How each phase is named in a skill's "used at" line.
+const SHORT = {
+  ifsp: "IFSP",
+  eletronica: "Luxxel",
+  mobint: "Mobint",
+  porto: "Porto Seguro",
+  si: "Anhanguera",
+  estatistica: "estatística",
+  magalu: "Magazine Luiza",
+  jusbrasil: "Jusbrasil",
+  telecom: "pós em Telecom",
+  radio: "simulados da Anatel",
+  blog: "blog",
+};
+
+const RINGS = [
+  { radius: 4.6, star: 1.45, name: "experiência profissional" },
+  { radius: 8.6, star: 1, name: "formação" },
+  { radius: 12.4, star: 0.8, name: "hobbies e outros" },
 ];
 
 // Technology → phases where it was used (from the LinkedIn profile and the blog).
@@ -52,6 +77,7 @@ const SKILLS = {
 const BRIDGES = [
   ["eletronica", "radio", "O mesmo interesse por sinal, do ferro de solda ao rádio."],
   ["estatistica", "blog", "Estatística aparece no blog, como no post sobre o problema de Monty Hall."],
+  ["radio", "telecom", "O rádio levou à pós em Telecomunicações."],
 ];
 
 const MORSE = {
@@ -247,7 +273,7 @@ function stardust(count, radius) {
 /** Energy running along the trajectory: brighter dashes that flow in chronological order. */
 function flowingTube(curve) {
   return new THREE.Mesh(
-    new THREE.TubeGeometry(curve, 300, 0.05, 8, true),
+    new THREE.TubeGeometry(curve, 300, 0.04, 8, false),
     new THREE.ShaderMaterial({
       uniforms: { time: { value: 0 }, color: { value: glow(COLORS.text, 1.2) } },
       vertexShader: `
@@ -262,7 +288,7 @@ function flowingTube(curve) {
         varying float vU;
         void main() {
           float dash = smoothstep(0.55, 1.0, fract(vU * 36.0 - time * 0.35));
-          float a = 0.12 + dash * 0.55;
+          float a = 0.05 + dash * 0.3;
           gl_FragColor = vec4(color * a, a);
         }`,
       transparent: true,
@@ -283,13 +309,34 @@ export function createHero() {
   const dust = stardust(420, 14);
   sky.add(dust);
 
-  // Stars on a ring, in chronological order, at gently varying heights.
-  const R = 9.5;
+  // Faint guide orbits, one per category, with its name at the front.
+  RINGS.forEach((ring, r) => {
+    const pts = Array.from({ length: 129 }, (_, i) => {
+      const a = (i / 128) * Math.PI * 2;
+      return new THREE.Vector3(Math.cos(a) * ring.radius, -0.4, Math.sin(a) * ring.radius);
+    });
+    sky.add(
+      new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({ color: 0x6f86b0, transparent: true, opacity: 0.18 - r * 0.03, depthWrite: false }),
+      ),
+    );
+    const tag = label(ring.name, "small plain");
+    tag.position.set(0, -0.4, ring.radius + 0.35);
+    sky.add(tag);
+  });
+
+  // Stars spread evenly on their category's orbit, in chronological order, offset so rings don't align.
+  const perRing = RINGS.map((_, r) => HUBS.filter((h) => h.ring === r));
   const hubs = HUBS.map((h, i) => {
-    const a = (i / HUBS.length) * Math.PI * 2 + Math.PI * 0.6;
-    const pos = new THREE.Vector3(Math.cos(a) * R, Math.sin(i * 1.7) * 1.2, Math.sin(a) * R);
+    const mates = perRing[h.ring];
+    const k = mates.indexOf(h);
+    const a = (k / mates.length) * Math.PI * 2 + Math.PI * (0.6 + h.ring * 0.37);
+    const R = RINGS[h.ring].radius;
+    const pos = new THREE.Vector3(Math.cos(a) * R, Math.sin(i * 1.7) * 0.8, Math.sin(a) * R);
     const star = new THREE.Group();
     star.position.copy(pos);
+    star.scale.setScalar(RINGS[h.ring].star);
     sky.add(star);
 
     // A faint nebula in the phase's colour, then the star itself: core, corona and halo.
@@ -319,22 +366,29 @@ export function createHero() {
       return { orbit, moon, r, speed: 0.6 + Math.random() * 0.8, phase: Math.random() * Math.PI * 2 };
     });
 
-    const title = h.years ? `${h.name} · ${h.years}` : h.name;
-    const l = label(title);
+    // What the phase was about leads; where and when come second.
+    const title = `${h.role} · ${h.where}`;
+    const l = label("", h.ring === 0 ? "hub main" : "hub");
+    const roleEl = document.createElement("strong");
+    roleEl.textContent = h.role;
+    const whereEl = document.createElement("span");
+    whereEl.textContent = h.where;
+    l.element.append(roleEl, whereEl);
     l.position.set(0, 1.25, 0);
     star.add(l);
-    const hit = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshBasicMaterial({ visible: false }));
+    const hit = new THREE.Mesh(new THREE.SphereGeometry(RINGS[h.ring].star, 10, 8), new THREE.MeshBasicMaterial({ visible: false }));
     hit.position.copy(pos);
     sky.add(hit);
-    pickable(pickables, hit, { title, text: `${h.text} Clique para ver a cena.` }, () =>
+    pickable(pickables, hit, { title, text: "Clique para ver a cena." }, () =>
       document.getElementById(h.scene)?.scrollIntoView({ block: "center" }),
     );
     return { ...h, pos, star, mesh, shell, halo, orbits, hit, label: l, pulse: 0, skills: [], beat: Math.random() * Math.PI * 2 };
   });
   const hubById = Object.fromEntries(hubs.map((h) => [h.id, h]));
 
-  // The trajectory: a closed curve through the stars in order, with a comet that travels the career.
-  const trajectory = new THREE.CatmullRomCurve3(hubs.map((h) => h.pos), true, "centripetal");
+  // The trajectory: an open path through the stars in chronological order, weaving between the orbits,
+  // with a comet that travels it from 2006 to today.
+  const trajectory = new THREE.CatmullRomCurve3(hubs.map((h) => h.pos), false, "centripetal");
   const trail = flowingTube(trajectory);
   sky.add(trail);
   const TRAIL = 60;
@@ -371,15 +425,20 @@ export function createHero() {
     const pos = new THREE.Vector3();
     if (owners.length > 1) {
       owners.forEach((o) => pos.add(o.pos));
-      pos.multiplyScalar(0.62 / owners.length);
+      pos.multiplyScalar(1 / owners.length);
+      // Keep shared skills off the radio in the middle.
+      const flat = Math.hypot(pos.x, pos.z);
+      if (flat < 2.8) pos.multiplyScalar(2.8 / Math.max(flat, 0.01));
       pos.y += Math.sin(k * 2.3) * 0.9;
     } else {
       const hub = owners[0];
       const j = (placed[hub.id] = (placed[hub.id] ?? -1) + 1);
       const m = fan[hub.id];
       const base = Math.atan2(hub.pos.z, hub.pos.x);
-      const a = base + (j - (m - 1) / 2) * 0.5;
-      const r = 2.6 + (j % 2) * 0.6;
+      // Center stars keep their fan tight, so it stays between their orbit and the education one.
+      const inner = hub.ring === 0;
+      const a = base + (j - (m - 1) / 2) * (inner ? 0.62 : 0.5);
+      const r = (inner ? 1.9 : 2.6) + (j % 2) * (inner ? 0.5 : 0.6);
       pos.set(hub.pos.x + Math.cos(a) * r, hub.pos.y + (j % 2 ? 0.4 : -0.2), hub.pos.z + Math.sin(a) * r);
     }
     const color = owners[owners.length - 1].color;
@@ -394,7 +453,7 @@ export function createHero() {
     const hit = new THREE.Mesh(new THREE.SphereGeometry(0.45, 8, 6), new THREE.MeshBasicMaterial({ visible: false }));
     hit.position.copy(pos);
     sky.add(hit);
-    const where = owners.map((o) => o.name).join(", ");
+    const where = owners.map((o) => SHORT[o.id]).join(", ");
     pickable(pickables, hit, { title: name, text: `Usado em: ${where}.` });
     const skill = { name, pos, mesh, halo, hit, label: l, owners, links: [], pulse: 0, color, phase: Math.random() * 6.28 };
     owners.forEach((o) => {
@@ -423,6 +482,11 @@ export function createHero() {
     sky.add(line);
     return { line, ends: [hubById[a], hubById[b]] };
   });
+
+  // Caption under the constellation (outside the turning sky): what the focused phase was about.
+  const caption = label("", "caption focus");
+  caption.position.set(0, -2, 12.6);
+  group.add(caption);
 
   // The radio in the middle, sending the name in Morse; each symbol leaves as a ring of radio waves.
   const { radio, led, tip } = makeRadio();
@@ -473,33 +537,54 @@ export function createHero() {
     // From the antenna tip (radio space) into the turning sky.
     tipLocal.copy(tip).add(radio.position);
     sky.worldToLocal(group.localToWorld(tipLocal));
-    const hub = hubs[nextHub];
-    nextHub = (nextHub + 1) % hubs.length;
+    // While a star is in focus, most symbols go to it, so its skills light up one after another;
+    // every fourth one still visits the rest of the sky in turn.
+    symbolCount++;
+    let hub;
+    if (focusHub && focusHub.skills.length && symbolCount % 4) {
+      hub = focusHub;
+    } else {
+      hub = hubs[nextHub];
+      nextHub = (nextHub + 1) % hubs.length;
+    }
     flow.emit(new THREE.LineCurve3(tipLocal.clone(), hub.pos), {
       color: hub.color,
       speed: 14,
       scale: dah ? 1.6 : 1,
       onArrive: () => {
         hub.pulse = 1;
-        // Only the star in focus forwards the signal to its skills; the rest of the sky stays quiet.
-        if (hub !== focusHub) return;
-        const s = hub.skills[(Math.random() * hub.skills.length) | 0];
-        if (!s) return;
+        // Only the star in focus forwards the signal, to its skills in turn; each name shows briefly
+        // when the pulse reaches it, so the text appears one point at a time.
+        if (hub !== focusHub || !hub.skills.length) return;
+        hub.nextSkill = ((hub.nextSkill ?? -1) + 1) % hub.skills.length;
+        const s = hub.skills[hub.nextSkill];
         const link = s.links.find((l) => l.hub === hub);
-        flow.emit(link.curve, { color: hub.color, speed: 8, scale: 0.8, onArrive: () => (s.pulse = 1) });
+        flow.emit(link.curve, {
+          color: hub.color,
+          speed: 9,
+          scale: 0.8,
+          onArrive: () => {
+            s.pulse = 1;
+            s.labelUntil = now + LABEL_TIME;
+          },
+        });
       },
     });
   }
 
   let spin = 0.05;
   let lastFocus = null;
+  let symbolCount = 0;
+  let now = 0;
+  const LABEL_TIME = 1.5;
 
   return {
     id: "hero",
     group,
     pickables,
-    view: { pos: [0, 22, 23.5], target: [0, -1, 0.5], fogFar: 100, narrow: { pos: [0, 24, 21], target: [0, -1, 0.5] } },
+    view: { pos: [0, 27, 27], target: [0, -1.5, 0.5], fogFar: 110, narrow: { pos: [0, 30, 24], target: [0, -1.5, 0.5] } },
     update(dt, time, focus) {
+      now = time;
       // Morse
       stepT += dt;
       while (stepT >= steps[step].dur) {
@@ -579,15 +664,26 @@ export function createHero() {
       });
       if (focusKey !== lastFocus) {
         lastFocus = focusKey;
-        skills.forEach((s) => (s.label.element.style.opacity = litSkills.has(s) ? "" : "0"));
-        hubs.forEach((h) => (h.label.element.style.opacity = litHubs.has(h) ? "" : "0.6"));
+        caption.element.textContent = focusHub
+          ? `${focusHub.role}: ${focusHub.text}`
+          : `${skill.name}: usado em ${skill.owners.map((o) => SHORT[o.id]).join(", ")}.`;
+        // Only the focused star(s) keep a name on screen.
+        hubs.forEach((h) => (h.label.element.style.opacity = litHubs.has(h) ? "" : "0"));
       }
+      skills.forEach((s) => {
+        const show = s === skill || (s.labelUntil ?? 0) > time;
+        if (show !== s.labelShown) {
+          s.labelShown = show;
+          s.label.element.style.opacity = show ? "" : "0";
+        }
+      });
 
       // Comet: one lap of the career every ~20 s, its tail taking the colour of the nearest star.
       cometT = (cometT + dt / 20) % 1;
       const posAttr = cometGeo.attributes.position;
       for (let i = 0; i < TRAIL; i++) {
-        const t = (cometT - i * 0.0025 + 1) % 1;
+        // The path is open: the tail stops at the start instead of wrapping around to the end.
+        const t = Math.max(0, cometT - i * 0.0025);
         trajectory.getPointAt(t, tmpP);
         posAttr.setXYZ(i, tmpP.x, tmpP.y, tmpP.z);
       }

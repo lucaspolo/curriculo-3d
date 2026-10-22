@@ -8,7 +8,12 @@ O conteúdo foi tirado do LinkedIn (`linkedin.com/in/lucaspolo`) em 21/10/2026. 
 currículo, atualize o texto em `index.html` e, se mudar algo que aparece nas cenas (nomes de
 serviços, anos da linha do tempo), o módulo da estação correspondente. A abertura
 (`src/stations/hero.js`) é uma constelação: `HUBS` são as fases e `SKILLS` liga cada tecnologia do
-perfil às fases em que foi usada. Experiência ou tecnologia nova no LinkedIn entra ali também.
+perfil às fases em que foi usada. Experiência ou tecnologia nova no LinkedIn entra ali também. Cada
+fase tem `role` (o que foi feito, em destaque no rótulo), `where` (empresa ou instituição e anos, menor)
+e `text` (a frase da legenda quando a fase está em foco): a cena destaca o trabalho, não a empresa. O
+campo `ring` de cada fase define a órbita: 0 para experiência profissional (centro, estrelas
+maiores), 1 para formação e 2 para hobbies e outros (Luxxel fica aqui; a Mobint é experiência
+profissional e fica no centro, por decisão do Lucas).
 
 ## Stack
 
