@@ -274,9 +274,9 @@ p {
 
 .timeline li {
   display: grid;
-  grid-template-columns: 52px 1fr;
+  grid-template-columns: 72px 1fr;
   gap: 10px;
-  padding: 6px 0;
+  padding: 4px 0;
   border-bottom: 1px dashed var(--panel-border);
   color: var(--muted);
 }
@@ -309,12 +309,20 @@ a:hover {
   color: var(--muted);
 }
 
+.jobs {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+}
+
+.jobs li,
 .certs li {
   padding: 5px 0;
   font-size: 14px;
   border-bottom: 1px dashed var(--panel-border);
 }
 
+.jobs span,
 .certs span {
   display: block;
   font-family: var(--font-mono);

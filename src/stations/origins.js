@@ -6,10 +6,9 @@ import { COLORS, glow, label, pickable, damp } from "../lib/kit.js";
 const DWELL = 3.4; // seconds the spotlight stays on each object
 const HOVER_HOLD = 2.5; // seconds the hovered object keeps the spotlight after the pointer leaves
 const DESK_W = 17;
-const DESK_D = 10.5;
-// Two rows read like the timeline: the low, older objects in front, the taller, recent ones behind.
-const FRONT_Z = 2.2;
-const BACK_Z = -2.2;
+const DESK_D = 13.5;
+// Three rows read like the timeline, front to back. Taller objects sit further back so nothing is hidden.
+const ROWS = [4, 0.2, -3.6];
 const COLUMNS = [-6, -2, 2, 6];
 const TIMELINE_Z = DESK_D / 2 - 0.45;
 
@@ -463,51 +462,245 @@ function laptop() {
   };
 }
 
+// Miniatures of the company scenes: clicking them scrolls to the full scene.
+
+function portoCar() {
+  const root = new THREE.Group();
+  root.rotation.y = 0.35;
+  const paint = mat(0x1d3b5c, { emissive: COLORS.kafka, emissiveIntensity: 0.25, roughness: 0.4, metalness: 0.4 });
+  const body = box(1.7, 0.45, 0.9, paint);
+  body.position.y = 0.42;
+  root.add(body);
+  const cabin = box(0.9, 0.38, 0.8, paint);
+  cabin.position.set(-0.12, 0.83, 0);
+  root.add(cabin);
+  const wheelGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.14, 14);
+  wheelGeo.rotateX(Math.PI / 2);
+  const wheelMat = mat(0x05070c);
+  [-0.55, 0.55].forEach((x) =>
+    [-0.44, 0.44].forEach((z) => {
+      const w = new THREE.Mesh(wheelGeo, wheelMat);
+      w.position.set(x, 0.2, z);
+      root.add(w);
+    }),
+  );
+  const shield = new THREE.Mesh(
+    new THREE.SphereGeometry(1.25, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshBasicMaterial({
+      color: glow(COLORS.ok, 1.3),
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      toneMapped: false,
+    }),
+  );
+  shield.scale.set(1.1, 0.95, 0.85);
+  root.add(shield);
+  const policy = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.45, 0.58),
+    new THREE.MeshBasicMaterial({ color: glow(COLORS.ok, 1.4), toneMapped: false, side: THREE.DoubleSide }),
+  );
+  policy.position.y = 1.7;
+  policy.visible = false;
+  root.add(policy);
+  return {
+    root,
+    play(k, dt, time) {
+      shield.material.opacity = Math.min(0.3, k * 0.9);
+      policy.visible = k > 0.25;
+      policy.position.y = 1.7 + Math.sin(time * 3) * 0.08;
+      policy.rotation.y = time * 1.5;
+    },
+    idle() {
+      shield.material.opacity = 0;
+      policy.visible = false;
+    },
+  };
+}
+
+function deliveryTruck() {
+  const root = new THREE.Group();
+  root.rotation.y = -0.35;
+  const cab = box(0.8, 0.75, 0.9, mat(0x1d3b5c, { emissive: COLORS.k8s, emissiveIntensity: 0.3 }));
+  cab.position.set(0.95, 0.55, 0);
+  root.add(cab);
+  const bedGeo = new THREE.BoxGeometry(1.7, 0.95, 0.95);
+  const bed = new THREE.Mesh(bedGeo, mat(0x1a2436, { transparent: true, opacity: 0.25, depthWrite: false }));
+  bed.position.set(-0.35, 0.68, 0);
+  bed.add(new THREE.LineSegments(new THREE.EdgesGeometry(bedGeo), new THREE.LineBasicMaterial({ color: glow(COLORS.k8s, 1.3), toneMapped: false })));
+  root.add(bed);
+  const wheelGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.14, 14);
+  wheelGeo.rotateX(Math.PI / 2);
+  const wheelMat = mat(0x05070c);
+  const wheels = [];
+  [-0.8, -0.2, 0.95].forEach((x) =>
+    [-0.45, 0.45].forEach((z) => {
+      const w = new THREE.Mesh(wheelGeo, wheelMat);
+      w.position.set(x, 0.2, z);
+      root.add(w);
+      wheels.push(w);
+    }),
+  );
+  const boxMat = mat(0xc49a6c, { emissive: 0x3a2410 });
+  const parcels = [];
+  [-0.85, -0.35, 0.15].forEach((x) =>
+    [0.4, 0.82].forEach((y) => {
+      const p = box(0.38, 0.38, 0.38, boxMat);
+      p.position.set(x, y, 0);
+      root.add(p);
+      parcels.push(p);
+    }),
+  );
+  const fill = (n) => parcels.forEach((p, i) => (p.visible = i < n));
+  return {
+    root,
+    play(k, dt) {
+      // Fills up, then rolls forward as if leaving for the delivery.
+      fill(Math.min(parcels.length, Math.floor(k * 1.6 * parcels.length)));
+      const go = Math.max(0, k - 0.7) / 0.3;
+      root.position.x = root.userData.baseX + go * 0.6;
+      wheels.forEach((w) => (w.rotation.z -= go > 0 ? dt * 6 : 0));
+    },
+    idle() {
+      fill(parcels.length);
+      root.position.x = root.userData.baseX;
+    },
+  };
+}
+
+function justiceScale() {
+  const root = new THREE.Group();
+  const brass = mat(0xb08a3a, { metalness: 0.8, roughness: 0.3 });
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 0.15, 24), brass);
+  base.position.y = 0.08;
+  root.add(base);
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2, 12), brass);
+  post.position.y = 1.1;
+  root.add(post);
+  const beam = new THREE.Group();
+  beam.position.y = 2.05;
+  root.add(beam);
+  const bar = box(2.2, 0.07, 0.07, brass);
+  beam.add(bar);
+  const chainMat = new THREE.LineBasicMaterial({ color: 0xb08a3a });
+  const pans = [-1, 1].map((side) => {
+    const hanger = new THREE.Group();
+    hanger.position.x = side * 1.05;
+    beam.add(hanger);
+    const chains = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(-0.3, -0.75, 0),
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0.3, -0.75, 0),
+    ]);
+    hanger.add(new THREE.LineSegments(chains, chainMat));
+    const pan = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.3, 0.06, 20), brass);
+    pan.position.y = -0.78;
+    hanger.add(pan);
+    return hanger;
+  });
+  // A small stack of documents on one pan: the court data the platform organizes.
+  const docMat = new THREE.MeshBasicMaterial({ color: glow(COLORS.kafka, 1.1), toneMapped: false });
+  [0, 1, 2].forEach((i) => {
+    const d = box(0.42, 0.04, 0.3, docMat);
+    d.position.set(0, -0.72 + i * 0.05, 0);
+    d.rotation.y = i * 0.3;
+    pans[0].add(d);
+  });
+  const settle = (angle) => {
+    beam.rotation.z = angle;
+    pans.forEach((p) => (p.rotation.z = -angle));
+  };
+  return {
+    root,
+    play(k, dt, time) {
+      // Swings, then settles level: balanced, organized information.
+      settle(Math.sin(time * 4) * 0.25 * Math.max(0, 1 - k * 1.6));
+    },
+    idle: () => settle(0),
+  };
+}
+
 const OBJECTS = [
-  { year: "2006", short: "Técnico em programação", x: COLUMNS[0], z: FRONT_Z, build: books, text: "Técnico em programação no IFSP: o primeiro contato com lógica e código." },
+  // Front row
+  { year: "2006", short: "Técnico em programação", col: 0, row: 0, build: books, text: "Técnico em programação no IFSP: o primeiro contato com lógica e código." },
   {
     year: "2008",
     short: "Solda e montagem de circuitos",
-    x: COLUMNS[1],
-    z: FRONT_Z,
+    col: 1,
+    row: 0,
     build: solderingBench,
     text: "Primeiro emprego, na Luxxel: soldagem e montagem de circuitos eletrônicos e testes de reatores.",
   },
-  { year: "2010", short: "Recenseador do IBGE", x: COLUMNS[2], z: FRONT_Z, build: clipboard, text: "Recenseador do IBGE em Itapemirim (ES), de porta em porta. Dados coletados um a um." },
-  { year: "2011", short: "Sites móveis na Mobint", x: COLUMNS[3], z: FRONT_Z, build: oldPhone, text: "Estágio na Mobint: sites móveis com PHP (CodeIgniter) e MySQL. Logo depois, a Porto Seguro." },
+  { year: "2010", short: "Recenseador do IBGE", col: 2, row: 0, build: clipboard, text: "Recenseador do IBGE em Itapemirim (ES), de porta em porta. Dados coletados um a um." },
+  { year: "2011", short: "Sites móveis na Mobint", col: 3, row: 0, build: oldPhone, text: "Estágio na Mobint: sites móveis com PHP (CodeIgniter) e MySQL." },
+  // Middle row
+  {
+    year: "2011",
+    short: "Porto Seguro",
+    col: 0,
+    row: 1,
+    build: portoCar,
+    scene: "porto",
+    text: "Analista de sistemas na Porto Seguro (jul 2011 – dez 2018): o pipeline da proposta à apólice, em Java e Informix 4GL. Clique para ver a cena.",
+  },
   {
     year: "2015",
     short: "Sistemas de Informação",
-    x: COLUMNS[0],
-    z: BACK_Z,
+    col: 1,
+    row: 1,
     build: diploma,
     text: "Bacharelado em Sistemas de Informação na Anhanguera, cursado enquanto trabalhava na Porto Seguro.",
   },
   {
     year: "2018",
     short: "Estatística aplicada",
-    x: COLUMNS[1],
-    z: BACK_Z,
+    col: 2,
+    row: 1,
+    tall: true,
     build: statsBoard,
     text: "Extensão em Estatística Aplicada na FMU. Depois, de 2022 a 2024, Matemática na UNINTER (não concluído).",
   },
   {
+    year: "2018",
+    short: "Magazine Luiza",
+    col: 3,
+    row: 1,
+    build: deliveryTruck,
+    scene: "magalu",
+    text: "Desenvolvedor e depois desenvolvedor sênior no Magazine Luiza (dez 2018 – jan 2022): o cálculo de frete em escala. Clique para ver a cena.",
+  },
+  // Back row: column 2 stays empty, behind the statistics board.
+  {
+    year: "2022",
+    short: "Jusbrasil",
+    col: 0,
+    row: 2,
+    tall: true,
+    build: justiceScale,
+    scene: "kafka",
+    text: "Engenheiro de software sênior no Jusbrasil (desde jan 2022): pipelines com Kafka, proteção de dados, LLMs e Kubernetes. Clique para ver as cenas.",
+  },
+  {
     year: "2026",
     short: "Radioamador e Telecom",
-    x: COLUMNS[2],
-    z: BACK_Z,
+    col: 1,
+    row: 2,
+    tall: true,
     build: radio,
     text: "Radioamador, com um projeto de simulados para a prova da Anatel. Em 2026, pós em Engenharia de Redes de Telecomunicações (Estácio).",
   },
   {
     year: "hoje",
     short: "O blog",
-    x: COLUMNS[3],
-    z: BACK_Z,
+    col: 3,
+    row: 2,
+    tall: true,
     build: laptop,
     text: "blog.lucaspolo.dev: anotações sobre o que estou aprendendo, de Python e Java a cálculo lambda e estatística.",
   },
-];
+].map((o) => ({ ...o, x: COLUMNS[o.col], z: ROWS[o.row] }));
 
 export function createOrigins() {
   const group = new THREE.Group();
@@ -545,21 +738,24 @@ export function createOrigins() {
   const items = OBJECTS.map((o, i) => {
     const obj = o.build();
     obj.root.position.x += o.x;
+    obj.root.userData.baseX = obj.root.position.x;
     obj.root.position.z += o.z;
     group.add(obj.root);
     const l = label(`${o.year} · ${o.short}`);
-    l.position.set(o.x, o.z === FRONT_Z ? 2 : 3.4, o.z);
+    l.position.set(o.x, o.tall ? 3.4 : 2, o.z);
     l.visible = false;
     group.add(l);
     // An invisible box around the object is easier to hover than its thin parts.
-    // Front-row boxes stay low so they don't steal the pointer from the taller objects behind them.
-    const h = o.z === FRONT_Z ? 1.4 : 3.2;
+    // Low objects get low boxes so they don't steal the pointer from the taller objects behind them.
+    const h = o.tall ? 3.2 : 1.5;
     const hit = box(2.6, h, 2.4, new THREE.MeshBasicMaterial({ visible: false }));
     hit.position.set(o.x, h / 2, o.z);
     group.add(hit);
-    pickable(pickables, hit, { title: `${o.year} · ${o.short}`, text: o.text });
+    // Company miniatures link to their full scene.
+    const goTo = o.scene ? () => document.getElementById(o.scene)?.scrollIntoView({ block: "center" }) : undefined;
+    pickable(pickables, hit, { title: `${o.year} · ${o.short}`, text: o.text }, goTo);
     const marker = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 10), new THREE.MeshBasicMaterial({ toneMapped: false }));
-    marker.position.set(-7 + i * 2, 0.12, TIMELINE_Z);
+    marker.position.set(-7.5 + i * 1.5, 0.12, TIMELINE_Z);
     group.add(marker);
     const year = label(o.year, "small plain");
     year.position.set(0, -0.45, 0.3);
@@ -588,7 +784,7 @@ export function createOrigins() {
     id: "origins",
     group,
     pickables,
-    view: { pos: [0, 12.5, 16.5], target: [0, 0.8, -0.2], fogFar: 100 },
+    view: { pos: [0, 15, 18.5], target: [0, 0.6, 0], fogFar: 100 },
     bindUi(section) {
       // The card's timeline mirrors the desk: hovering a line moves the spotlight there.
       listItems = [...section.querySelectorAll(".timeline li")];

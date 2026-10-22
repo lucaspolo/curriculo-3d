@@ -107,6 +107,10 @@ Node do `mise.toml`, roda os testes, faz o build e publica o `dist/`.
 - ⚠️ Uma seção mais alta que a tela continua rolável por dentro. O CSS permite rolar dentro de um
   alvo de snap maior que a viewport, e o `wheel-step` só troca de seção quando a borda da seção
   atual já está visível.
+- ⚠️ Em "De onde eu vim", a linha do tempo do card e os objetos da bancada são ligados **pela
+  posição**: o n-ésimo `<li>` de `.timeline` corresponde ao n-ésimo item de `OBJECTS` em
+  `src/stations/origins.js`. Ao incluir ou reordenar uma fase, mude os dois juntos, senão passar o
+  mouse numa linha acende o objeto errado.
 - ⚠️ Os rótulos das estações fora de foco são escondidos por classe CSS (`muted-by-stage`), não por
   `visible`. As estações também mexem em `visible` dos próprios objetos, e as duas coisas brigariam.
 
