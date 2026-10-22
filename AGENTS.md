@@ -6,7 +6,9 @@ origens) e termina numa visão geral com contato.
 
 O conteúdo foi tirado do LinkedIn (`linkedin.com/in/lucaspolo`) em 21/10/2026. Ao atualizar o
 currículo, atualize o texto em `index.html` e, se mudar algo que aparece nas cenas (nomes de
-serviços, anos da linha do tempo), o módulo da estação correspondente.
+serviços, anos da linha do tempo), o módulo da estação correspondente. A abertura
+(`src/stations/hero.js`) é uma constelação: `HUBS` são as fases e `SKILLS` liga cada tecnologia do
+perfil às fases em que foi usada. Experiência ou tecnologia nova no LinkedIn entra ali também.
 
 ## Stack
 
@@ -140,7 +142,8 @@ caso Frankenstein. Na cena de Kubernetes, os nomes de namespace, pod, job e Cron
 taxas de erro do canário são ilustrativos. Na bancada de "De onde eu vim", o contador de domicílios do IBGE e o site
 `m.exemplo` no celular, os títulos das lombadas, a tela do PDA, as fórmulas do quadro e a folha de
 simulado da Anatel são ilustrativos (o PDA em si é fiel: o Censo 2010 foi coletado com eles); os títulos de post no notebook são reais (do blog) e devem
-acompanhar o blog se ele mudar. Já as práticas mostradas (escala por lag, deploy gradual,
+acompanhar o blog se ele mudar. Na abertura, a tecnologia "Circuitos" e as ligações tracejadas entre fases (eletrônica ↔ rádio,
+estatística ↔ blog) são interpretação, não itens do perfil. Já as práticas mostradas (escala por lag, deploy gradual,
 canário com rollback, jobs pontuais e agendados, réplicas em duas zonas) foram confirmadas pelo Lucas. Que a Porto tinha pipelines da proposta
 até a emissão da apólice veio do próprio Lucas, não do LinkedIn. Não descrevem sistemas reais das empresas. Mantenha assim:
 o currículo não deve sugerir detalhes internos que não estão no perfil.
