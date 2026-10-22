@@ -60,7 +60,8 @@ src/stage.js          renderer, bloom, câmera guiada pelo scroll, picking e too
 src/lib/progress.js   matemática pura do scroll (testada em tests/)
 src/lib/kit.js        cores, rótulos, caixas com borda, tubos e Flow (mensagens nos tubos)
 src/stations/*.js     uma cena por arquivo (partes grandes à parte: magalu-logistics, privacy-cascade,
-                      llm-vignettes, origins-details com os detalhes de cada objeto da bancada)
+                      llm-vignettes, origins-details com os detalhes de cada objeto da bancada,
+                      porto-station com as estações em arco do pipeline de emissão)
 tests/                node --test
 ```
 

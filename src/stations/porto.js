@@ -1,7 +1,8 @@
 // Porto Seguro scene: the policy issuance pipeline. A customer drives up, hands in the proposal, follows it
 // through the stages and drives off with the issued policy. Informix and Oracle answer every stage.
 import * as THREE from "three";
-import { COLORS, glow, label, pickable, Flow, roundedBox, outline, outlineMaterial } from "../lib/kit.js";
+import { COLORS, glow, label, pickable, Flow, roundedBox, outline, outlineMaterial, damp } from "../lib/kit.js";
+import { makeStation } from "./porto-station.js";
 
 const ROAD_Z = 4.6;
 const BELT_Y = 1.45;
@@ -18,6 +19,7 @@ const STAGES = [
   {
     name: "Proposta recebida",
     short: "Proposta",
+    icon: "document",
     x: -9,
     color: COLORS.kafka,
     db: 0,
@@ -26,6 +28,7 @@ const STAGES = [
   {
     name: "Análise de risco",
     short: "Risco",
+    icon: null,
     x: -3,
     color: COLORS.warn,
     db: 0,
@@ -34,6 +37,7 @@ const STAGES = [
   {
     name: "Cálculo do prêmio",
     short: "Prêmio",
+    icon: "coin",
     x: 3,
     color: COLORS.message,
     db: 1,
@@ -42,6 +46,7 @@ const STAGES = [
   {
     name: "Emissão da apólice",
     short: "Emissão",
+    icon: "seal",
     x: 9,
     color: COLORS.ok,
     db: 1,
@@ -321,39 +326,22 @@ export function createPorto() {
 
   // Stages: see-through machines the proposal stops inside
   const stages = STAGES.map((s) => {
-    const geo = new THREE.BoxGeometry(3, 2.6, 2);
-    const box = new THREE.Mesh(
-      geo,
-      new THREE.MeshStandardMaterial({
-        color: s.color,
-        transparent: true,
-        opacity: 0.07,
-        depthWrite: false,
-        emissive: s.color,
-        emissiveIntensity: 0.1,
-      }),
-    );
-    box.position.set(s.x, BELT_Y + 0.15, 0);
-    const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(geo),
-      new THREE.LineBasicMaterial({ color: glow(s.color, 1.5), toneMapped: false }),
-    );
-    box.add(edges);
-    group.add(box);
-    const l = label(s.short);
-    l.position.set(0, 1.75, 0);
-    box.add(l);
+    const station = makeStation({ name: s.short, color: s.color, icon: s.icon }, BELT_Y - 0.72);
+    station.root.position.x = s.x;
+    group.add(station.root);
     const info = label("", "small");
-    info.position.set(0, 2.55, 0);
-    box.add(info);
-    pickable(pickables, box, { title: s.name, text: s.text });
-    return { ...s, box, info, glow: 0 };
+    info.position.copy(station.panelTop);
+    station.root.add(info);
+    pickable(pickables, station.hood, { title: s.name, text: s.text });
+    return { ...s, station, info, glow: 0, activity: 0, progress: 0 };
   });
 
   // Risk gauge on top of the analysis stage
+  // The live risk gauge takes the icon's place on the Risco panel.
   const gauge = new THREE.Group();
-  gauge.position.set(STAGES[1].x, BELT_Y + 0.75, 1.05);
-  group.add(gauge);
+  gauge.scale.setScalar(0.52);
+  gauge.position.y = -0.12;
+  stages[1].station.slot.add(gauge);
   [
     [COLORS.ok, Math.PI * 0.66],
     [COLORS.warn, Math.PI * 0.33],
@@ -489,6 +477,7 @@ export function createPorto() {
 
   function processStage(c, k) {
     const s = stages[c.stage];
+    s.progress = k;
     if (c.stage === 1 && k > 0.6) {
       s.info.element.textContent = `risco ${c.risk.name}`;
       c.doc.border.material.color.copy(glow(c.risk.color, 1.4));
@@ -605,9 +594,13 @@ export function createPorto() {
       }
 
       needle.rotation.z = THREE.MathUtils.lerp(needle.rotation.z, -needleTarget, 1 - Math.exp(-dt * 3));
-      stages.forEach((s) => {
+      // A station is lit while a proposal is inside it; its bar holds full briefly, then empties.
+      const busy = new Set(customers.filter((c) => c.phase === "processing").map((c) => c.stage));
+      stages.forEach((s, i) => {
         s.glow = Math.max(0, s.glow - dt * 0.8);
-        s.box.material.opacity = 0.07 + s.glow * 0.12 + (s.box.userData.hovered ? 0.08 : 0);
+        s.activity = damp(s.activity, busy.has(i) ? 1 : 0.15 * s.glow, 5, dt);
+        if (!busy.has(i)) s.progress = Math.max(0, s.progress - dt * 0.6);
+        s.station.update(dt, time, s.activity, s.progress, s.station.hood.userData.hovered);
       });
       dbs.forEach((d) => {
         d.pulse = Math.max(0, d.pulse - dt * 3);
