@@ -2,7 +2,7 @@
 // (web load, Kafka lag, schedules); the visitor can deploy, deploy a bad build (canary + rollback),
 // run a one-off job, or knock a pod down and watch it come back.
 import * as THREE from "three";
-import { COLORS, glow, label, pickable, Flow, roundedBox, outline } from "../lib/kit.js";
+import { COLORS, glow, label, pickable, Flow, roundedBox, outline, damp } from "../lib/kit.js";
 
 const SLOTS_X = Array.from({ length: 10 }, (_, i) => -9 + i * 2); // x < 0 is zone a, x > 0 zone b
 const INGRESS = new THREE.Vector3(0, 1.2, 10.5);
@@ -78,7 +78,7 @@ export function createK8s() {
     l.center.set(0, 0.5);
     group.add(l);
     pickable(pickables, band, { title: `namespace ${ns.key}`, text: ns.text });
-    return { ...ns, label: l, slots: [], desired: ns.min, version: 1 };
+    return { ...ns, band, label: l, slots: [], desired: ns.min, version: 1 };
   });
   const byKey = Object.fromEntries(namespaces.map((n) => [n.key, n]));
 
@@ -174,6 +174,9 @@ export function createK8s() {
   function kill(s) {
     if (s.state !== "running" || s.ns.key === "jobs") return;
     stop(s, "failed");
+    focusOn(s.ns.key, 5);
+    healing = s.ns;
+    setStatus(`pod ${s.name} caiu → o Kubernetes está recriando…`, true, s.ns);
   }
 
   // Labels: deploy status, Kafka lag, CronJob
@@ -181,11 +184,22 @@ export function createK8s() {
   status.position.set(0, 2.4, byKey.api.z + 1);
   status.visible = false;
   group.add(status);
-  const setStatus = (text, alert = false) => {
+  const setStatus = (text, alert = false, ns = byKey.api) => {
     status.element.textContent = text;
     status.element.classList.toggle("alert", alert);
+    status.position.set(0, 2.4, ns.z + 1);
     status.visible = true;
   };
+
+  // Focus mode: while a visitor-triggered action plays out, the autoscaler holds still, traffic thins
+  // and the other namespaces dim, so the action is the only thing moving.
+  let spotlight = null;
+  let spotlightHold = 0;
+  let healing = null;
+  function focusOn(key, seconds) {
+    spotlight = key;
+    spotlightHold = Math.max(spotlightHold, seconds);
+  }
 
   const queue = new THREE.Mesh(
     roundedBox(1, 0.6, 1.4, 0.12).clone().translate(-0.5, 0, 0),
@@ -292,6 +306,7 @@ export function createK8s() {
   let statusTimer = 0;
   function beginDeploy(kind) {
     if (deploy) return;
+    focusOn("api", 3);
     const api = byKey.api;
     deploy = { kind, version: api.version + 1, timer: 0, surge: null, total: running(api).length };
     errors = 0;
@@ -342,12 +357,19 @@ export function createK8s() {
   }
 
   let cronTimer = 3;
-  function runJob(name) {
+  function runJob(name, manual = false) {
     const s = start(byKey.jobs, { name: `${name}-${rand()}` });
-    if (s) s.duration = 3.5 + Math.random() * 2.5;
+    if (!s) return;
+    s.duration = 3.5 + Math.random() * 2.5;
+    if (manual) {
+      focusOn("jobs", PENDING + s.duration + 2.5);
+      setStatus(`job ${s.name}: rodando até terminar…`, false, byKey.jobs);
+      s.manual = true;
+    }
   }
 
   let lag = 60;
+  let calm = 0;
   let spawn = 0;
   let consume = 0;
   let reconcile = 0;
@@ -361,28 +383,44 @@ export function createK8s() {
     actions: {
       deploy: () => beginDeploy("rolling"),
       baddeploy: () => beginDeploy("canary"),
-      job: () => runJob("reprocessar-processos"),
+      job: () => runJob("reprocessar-processos", true),
     },
     update(dt, time, focus) {
-      const load = THREE.MathUtils.clamp(0.5 + 0.3 * Math.sin(time * 0.3) + 0.15 * Math.sin(time * 1.1), 0, 1);
+      // Slow, smooth load: one cycle every ~50 s, so replicas change rarely enough to follow.
+      const load = THREE.MathUtils.clamp(0.5 + 0.35 * Math.sin(time * 0.125), 0, 1);
       // Incoming Kafka traffic with an occasional burst, so the lag (and the pipeline) visibly scales.
-      const lagIn = (24 + 18 * Math.sin(time * 0.45) + (Math.sin(time * 0.13) > 0.85 ? 60 : 0)) * focus;
+      const lagIn = (18 + 8 * Math.sin(time * 0.2) + (Math.sin(time * 0.07) > 0.9 ? 30 : 0)) * focus;
       lag = Math.max(0, lag + (lagIn - running(byKey.pipeline).length * 7) * dt);
 
-      byKey.front.desired = THREE.MathUtils.clamp(Math.round(2 + load * 4), byKey.front.min, byKey.front.max);
-      byKey.api.desired = THREE.MathUtils.clamp(Math.round(3 + load * 6), byKey.api.min, byKey.api.max);
-      byKey.pipeline.desired = THREE.MathUtils.clamp(Math.ceil(lag / 30) + 2, byKey.pipeline.min, byKey.pipeline.max);
+      if (deploy) spotlightHold = Math.max(spotlightHold, 3);
+      spotlightHold = Math.max(0, spotlightHold - dt);
+      if (spotlightHold === 0) spotlight = null;
+      calm = damp(calm, spotlight ? 1 : 0, 4, dt);
+
+      // The autoscaler holds its targets while an action is in focus.
+      if (!spotlight) {
+        byKey.front.desired = THREE.MathUtils.clamp(Math.round(2 + load * 4), byKey.front.min, byKey.front.max);
+        byKey.api.desired = THREE.MathUtils.clamp(Math.round(3 + load * 6), byKey.api.min, byKey.api.max);
+        byKey.pipeline.desired = THREE.MathUtils.clamp(Math.ceil(lag / 30) + 2, byKey.pipeline.min, byKey.pipeline.max);
+      }
 
       reconcile -= dt;
       if (reconcile <= 0) {
-        reconcile = 0.45;
+        reconcile = 1.5;
         ["front", "api", "pipeline"].forEach((key) => {
           const ns = byKey[key];
           if (key === "api" && deploy) return;
+          // In focus mode only the spotlighted namespace reconciles (e.g. replacing a knocked-down pod).
+          if (spotlight && key !== spotlight) return;
           const n = live(ns).length;
           if (n < ns.desired) start(ns);
-          else if (n > ns.desired && running(ns).length) stop(pick(running(ns)));
+          else if (n > ns.desired && running(ns).length && !spotlight) stop(pick(running(ns)));
         });
+      }
+      if (healing && running(healing).length >= healing.desired) {
+        setStatus("pod recriado ✓ · o serviço não parou", false, healing);
+        statusTimer = 3;
+        healing = null;
       }
       if (deploy) stepDeploy(dt);
       if (statusTimer > 0) {
@@ -391,11 +429,10 @@ export function createK8s() {
       }
 
       cronTimer -= dt;
-      hand.rotation.z = -(1 - cronTimer / 10) * Math.PI * 2;
+      hand.rotation.z = -(1 - cronTimer / 20) * Math.PI * 2;
       if (cronTimer <= 0) {
-        cronTimer = 10;
-        runJob("reindexacao");
-        runJob("reindexacao");
+        cronTimer = 20;
+        if (!spotlight) runJob("reindexacao");
       }
 
       namespaces.forEach((ns) =>
@@ -411,7 +448,14 @@ export function createK8s() {
             }
           } else if (s.state === "running" && ns.key === "jobs") {
             s.progress = Math.min(1, s.progress + dt / s.duration);
-            if (s.progress >= 1) stop(s, "completed");
+            if (s.progress >= 1) {
+              stop(s, "completed");
+              if (s.manual) {
+                setStatus(`job ${s.name}: concluído ✓ e removido`, false, byKey.jobs);
+                statusTimer = 3;
+                s.manual = false;
+              }
+            }
           } else if (s.state === "failed" || s.state === "terminating" || s.state === "completed") {
             target = s.state === "completed" ? 1 : 0.001;
             if (s.timer <= 0) {
@@ -427,20 +471,28 @@ export function createK8s() {
           const sc = THREE.MathUtils.lerp(s.mesh.scale.x, target, 1 - Math.exp(-dt * 8));
           s.mesh.scale.setScalar(sc + s.hits * 0.1 + (s.mesh.userData.hovered && s.state === "running" ? 0.1 : 0));
           const c = podColor(s);
-          s.edges.material.color.copy(c);
-          s.edges.userData.led.material.color.copy(c).multiplyScalar(1.6);
+          // Outside the spotlighted namespace, pods fade back while an action plays.
+          const dim = spotlight && ns.key !== spotlight ? 1 - calm * 0.65 : 1;
+          s.edges.material.color.copy(c).multiplyScalar(dim);
+          s.edges.userData.led.material.color.copy(c).multiplyScalar(1.6 * dim);
           s.mesh.material.emissive.copy(c);
-          s.mesh.material.emissiveIntensity = 0.12 + s.hits * 0.3;
+          s.mesh.material.emissiveIntensity = (0.12 + s.hits * 0.3) * dim;
         }),
       );
 
-      spawn += dt * (6 + load * 18) * focus;
+      namespaces.forEach((ns) => {
+        const lit = !spotlight || ns.key === spotlight;
+        ns.band.material.opacity = 0.06 + (spotlight && lit ? 0.1 * calm : 0) - (lit ? 0 : 0.04 * calm);
+        ns.label.element.style.opacity = lit ? "" : "0.35";
+      });
+
+      spawn += dt * (2 + load * 4) * (1 - 0.6 * calm) * focus;
       while (spawn > 1) {
         spawn--;
         request();
       }
       // Kafka messages feed the pipeline workers.
-      consume += dt * Math.min(lag, 30) * 0.3 * focus;
+      consume += dt * Math.min(lag, 30) * 0.1 * (1 - 0.6 * calm) * focus;
       while (consume > 1) {
         consume--;
         const w = pick(running(byKey.pipeline));
@@ -456,7 +508,7 @@ export function createK8s() {
       flow.update(dt);
 
       queue.scale.x = Math.max(0.05, Math.min(lag / 60, 2.6));
-      ingress.rotation.z += dt * (0.5 + load * 2);
+      ingress.rotation.z += dt * (0.3 + load * 0.6);
 
       const text = [
         `front · ${running(byKey.front).length} pods`,
