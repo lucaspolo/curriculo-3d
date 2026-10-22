@@ -111,6 +111,9 @@ Node do `mise.toml`, roda os testes, faz o build e publica o `dist/`.
   posição**: o n-ésimo `<li>` de `.timeline` corresponde ao n-ésimo item de `OBJECTS` em
   `src/stations/origins.js`. Ao incluir ou reordenar uma fase, mude os dois juntos, senão passar o
   mouse numa linha acende o objeto errado.
+- ⚠️ No celular, tocar em qualquer botão de um card (`revealScene()` em `main.js`) rola de volta até o
+  ponto em que o topo do card fica na linha de leitura, porque o card cobre a cena quando a pessoa
+  desce até os botões. Botão novo dentro de `.card` ganha esse comportamento sozinho.
 - ⚠️ Os rótulos das estações fora de foco são escondidos por classe CSS (`muted-by-stage`), não por
   `visible`. As estações também mexem em `visible` dos próprios objetos, e as duas coisas brigariam.
 

@@ -61,6 +61,15 @@ if (webglAvailable()) {
   document.documentElement.classList.add("no-webgl");
 }
 
+/** Scrolls (phone only) so the card's top sits on the read line again, with the scene above it. */
+function revealScene(section) {
+  if (!narrow()) return;
+  const card = section.querySelector(".card");
+  const top = card.getBoundingClientRect().top + window.scrollY - window.innerHeight * READ_LINE;
+  // No explicit behavior: the CSS scroll-behavior applies, which is instant under reduced motion.
+  if (Math.abs(window.scrollY - top) > 4) window.scrollTo({ top });
+}
+
 /** Horizontal slice of the screen (0–1) left free by the text cards and the section dots. */
 function freeArea() {
   const w = window.innerWidth;
@@ -86,6 +95,12 @@ async function start() {
 
   // Stations with their own controls in the card (e.g. tabs) wire them up themselves.
   stations.forEach((s, i) => s.bindUi?.(sections[i]));
+
+  // On phones the card sits over the scene once the visitor scrolls down to its buttons. Any button in
+  // a card is there to change the scene, so pressing one scrolls back to where the scene is visible.
+  sections.forEach((section) =>
+    section.querySelectorAll(".card button").forEach((btn) => btn.addEventListener("click", () => revealScene(section))),
+  );
 
   document.querySelectorAll("[data-action]").forEach((btn) =>
     btn.addEventListener("click", () => {
