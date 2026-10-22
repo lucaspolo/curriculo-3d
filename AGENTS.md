@@ -124,7 +124,9 @@ números. A divisão da cascata (60% sem dado pessoal, 34% NER, 6% LLM) também 
 de LLM, também são ilustrativos: os nomes de etapa, ferramenta e tópico (`extrair_decisao`,
 `buscar_processo`, `decisoes.estruturadas`), os campos do JSON, a issue, o diff e o PR. Elas continuam o
 caso Frankenstein. Na cena de Kubernetes, os nomes de namespace, pod, job e CronJob, as versões e as
-taxas de erro do canário são ilustrativos. Já as práticas mostradas (escala por lag, deploy gradual,
+taxas de erro do canário são ilustrativos. Na bancada de "De onde eu vim", o contador de domicílios do IBGE e o site
+`m.exemplo` no celular são ilustrativos; os títulos de post no notebook são reais (do blog) e devem
+acompanhar o blog se ele mudar. Já as práticas mostradas (escala por lag, deploy gradual,
 canário com rollback, jobs pontuais e agendados, réplicas em duas zonas) foram confirmadas pelo Lucas. Que a Porto tinha pipelines da proposta
 até a emissão da apólice veio do próprio Lucas, não do LinkedIn. Não descrevem sistemas reais das empresas. Mantenha assim:
 o currículo não deve sugerir detalhes internos que não estão no perfil.

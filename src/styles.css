@@ -552,3 +552,16 @@ body.pointer {
   background: var(--ok);
   box-shadow: 0 0 24px rgba(74, 222, 128, 0.3);
 }
+
+.timeline li {
+  transition: color 0.2s, background 0.2s;
+}
+
+.timeline li.active {
+  color: var(--text);
+  background: rgba(255, 179, 71, 0.08);
+}
+
+.timeline li.active span {
+  text-shadow: 0 0 10px var(--message);
+}
