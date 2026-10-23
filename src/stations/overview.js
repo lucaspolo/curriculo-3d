@@ -1,13 +1,13 @@
-// Closing shot: no geometry of its own, just a camera that pulls back over the whole journey.
+// Closing: no scene of its own, by choice. The contact card is the whole ending; this station only gives
+// the camera a calm resting place over the shared starfield, past the last scene.
 import * as THREE from "three";
 
 export function createOverview() {
   return {
     id: "overview",
     group: new THREE.Group(),
-    place: new THREE.Vector3(0, 0, 0),
     pickables: [],
-    view: { pos: [-110, 95, 150], target: [300, -25, -30], fogFar: 700 },
+    view: { pos: [0, 2, 24], target: [0, 1, 0], fogFar: 90 },
     update() {},
   };
 }

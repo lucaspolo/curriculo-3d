@@ -28,7 +28,7 @@
     </nav>
 
     <main id="content">
-      <section id="inicio" class="panel hero" data-station="hero">
+      <section id="inicio" class="panel hero centered" data-station="hero">
         <div class="card">
           <p class="eyebrow">São Paulo · Brasil</p>
           <h1>Lucas Polo</h1>
@@ -41,11 +41,17 @@
             <li>Python</li><li>Go</li><li>Scala</li><li>Java</li><li>Kafka</li><li>Spark</li><li>Airflow</li>
             <li>Kubernetes</li><li>GCP</li><li>LLMs</li>
           </ul>
-          <p class="aside">
-            Cada estrela é uma fase da minha trajetória; cada ponto, uma tecnologia que usei nela. No centro, um
-            rádio transmite meu nome em Morse. Passe o mouse para ver as ligações.
-          </p>
-          <p class="hint"><span class="mouse" aria-hidden="true"></span> Role a página para viajar pelas cenas</p>
+          <ul class="links contact">
+            <li><a href="https://www.linkedin.com/in/lucaspolo" rel="noopener">LinkedIn</a></li>
+            <li><a href="https://github.com/lucaspolo" rel="noopener">GitHub</a></li>
+            <li><a href="https://blog.lucaspolo.dev/" rel="noopener">Blog</a></li>
+            <li><span class="mail">contato [at] lucaspolo.dev</span></li>
+          </ul>
+          <a class="scroll-cue" href="#kafka">
+            <span class="mouse" aria-hidden="true"></span>
+            <span>Role para conhecer um pouco mais dos meus projetos</span>
+            <span class="chevron" aria-hidden="true"></span>
+          </a>
         </div>
       </section>
 
@@ -194,41 +200,41 @@
         </div>
       </section>
 
-      <section id="contato" class="panel" data-station="overview">
+      <section id="contato" class="panel centered closing" data-station="overview">
         <div class="card">
-          <p class="eyebrow">Visão geral</p>
-          <h2>Vamos conversar?</h2>
-          <ul class="links">
+          <p class="eyebrow">Contato</p>
+          <h2 class="display">Vamos conversar?</h2>
+          <p class="lead">Engenharia de software, dados em escala ou LLMs em produção: me chame por onde preferir.</p>
+          <ul class="pills">
             <li><a href="https://www.linkedin.com/in/lucaspolo" rel="noopener">LinkedIn</a></li>
             <li><a href="https://github.com/lucaspolo" rel="noopener">GitHub</a></li>
             <li><a href="https://blog.lucaspolo.dev/" rel="noopener">Blog</a></li>
             <li><span class="mail">contato [at] lucaspolo.dev</span></li>
           </ul>
-          <h3>Experiência</h3>
-          <ul class="jobs">
-            <li>
-              <a href="#kafka">Jusbrasil</a> · Engenheiro de software sênior
-              <span>jan 2022 – hoje</span>
-            </li>
-            <li>
-              <a href="#magalu">Magazine Luiza</a> · Desenvolvedor → Desenvolvedor sênior
-              <span>dez 2018 – jan 2022</span>
-            </li>
-            <li>
-              <a href="#porto">Porto Seguro</a> · Analista de sistemas
-              <span>jul 2011 – dez 2018</span>
-            </li>
+
+          <h3 class="eyebrow">Experiência</h3>
+          <ul class="chips">
+            <li title="Engenheiro de software sênior · jan 2022 – hoje"><a href="#kafka">Jusbrasil <span>2022–hoje</span></a></li>
+            <li title="Desenvolvedor → Desenvolvedor sênior · dez 2018 – jan 2022"><a href="#magalu">Magazine Luiza <span>2018–2022</span></a></li>
+            <li title="Analista de sistemas · jul 2011 – dez 2018"><a href="#porto">Porto Seguro <span>2011–2018</span></a></li>
+            <li title="Estágio em desenvolvimento de sites móveis · fev – abr 2011"><a href="#origens">Mobint <span>2011</span></a></li>
           </ul>
-          <h3>Certificações</h3>
-          <ul class="certs">
-            <li>Kafka: produtores, consumidores e streams <span>Alura · 2022</span></li>
-            <li>Apache Airflow: orquestrando pipelines de dados <span>Alura · 2022</span></li>
-            <li>Kubernetes for Developers: Core Concepts <span>Pluralsight · 2022</span></li>
-            <li>Rust Fundamentals <span>Pluralsight · 2022</span></li>
-            <li>Formação LangChain: aplicações de IA generativa <span>Alura · 2025</span></li>
-            <li>Engenharia de Prompt <span>Alura · 2025</span></li>
-            <li>Next.js com Postgres e Prisma <span>Alura · 2026</span></li>
+
+          <h3 class="eyebrow">Certificações</h3>
+          <ul class="chips">
+            <li title="Kafka: produtores, consumidores e streams · Alura · 2022">Kafka</li>
+            <li title="Apache Airflow: orquestrando pipelines de dados · Alura · 2022">Airflow</li>
+            <li title="Kubernetes for Developers: Core Concepts · Pluralsight · 2022">Kubernetes</li>
+            <li title="Rust Fundamentals · Pluralsight · 2022">Rust</li>
+            <li title="Formação LangChain: aplicações de IA generativa · Alura · 2025">LangChain</li>
+            <li title="Engenharia de Prompt · Alura · 2025">Engenharia de Prompt</li>
+            <li title="Next.js com Postgres e Prisma · Alura · 2026">Next.js</li>
           </ul>
+
+          <a class="scroll-cue up" href="#inicio">
+            <span>Voltar ao início</span>
+            <span class="chevron" aria-hidden="true"></span>
+          </a>
         </div>
       </section>
     </main>

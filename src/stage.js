@@ -229,14 +229,12 @@ export class Stage {
     this.scene.fog.far = damp(this.scene.fog.far, fogFar, 3, dt);
     this.scene.fog.near = this.scene.fog.far * 0.35;
 
-    const last = this.stations.length - 1;
-    const overview = focusOf(this.progress, last);
     this.stations.forEach((s, i) => {
       const focus = focusOf(this.progress, i);
-      const visible = focus > 0 || overview > 0;
+      const visible = focus > 0;
       s.group.visible = visible;
-      if (visible) s.update(sdt, this.time, Math.max(focus, overview * 0.6));
-      // In the overview every station animates, but only the focused one keeps its labels.
+      if (visible) s.update(sdt, this.time, focus);
+      // Labels show only on the station in focus, so a passing neighbour does not leave text behind.
       const showLabels = focus > 0.45;
       if (showLabels !== s.labelsShown) {
         s.labelsShown = showLabels;

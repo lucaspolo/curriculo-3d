@@ -2,18 +2,17 @@
 
 Currículo interativo do Lucas Polo em three.js. A página rola por "estações": cada experiência
 profissional vira uma cena animada (Kafka, Trust & Privacy, LLMs, Kubernetes, Magalu, Porto Seguro,
-origens) e termina numa visão geral com contato.
+origens) e termina num card de contato.
 
 O conteúdo foi tirado do LinkedIn (`linkedin.com/in/lucaspolo`) em 21/10/2026. Ao atualizar o
 currículo, atualize o texto em `index.html` e, se mudar algo que aparece nas cenas (nomes de
-serviços, anos da linha do tempo), o módulo da estação correspondente. A abertura
-(`src/stations/hero.js`) é uma constelação: `HUBS` são as fases e `SKILLS` liga cada tecnologia do
-perfil às fases em que foi usada. Experiência ou tecnologia nova no LinkedIn entra ali também. Cada
-fase tem `role` (o que foi feito, em destaque no rótulo), `where` (empresa ou instituição e anos, menor)
-e `text` (a frase da legenda quando a fase está em foco): a cena destaca o trabalho, não a empresa. O
-campo `ring` de cada fase define a órbita: 0 para experiência profissional (centro, estrelas
-maiores), 1 para formação e 2 para hobbies e outros (Luxxel fica aqui; a Mobint é experiência
-profissional e fica no centro, por decisão do Lucas).
+serviços, anos da linha do tempo), o módulo da estação correspondente. A abertura não
+tem cena 3D, por decisão do Lucas: o card centralizado (nome, resumo, tecnologias e contato) é a
+abertura inteira, e `src/stations/hero.js` só dá à câmera um ponto de partida. Já houve ali uma rede de
+nós, uma constelação de fases e uma linha do tempo animada; todas foram descartadas por poluírem a
+primeira impressão. Não volte a colocar animação nem informação além do currículo na abertura. O
+mesmo vale para o fim: a seção de contato (`overview.js`) também não tem cena, e os dois cards usam a
+classe `centered` (centralizados, sem fundo, e no celular sem o espaço reservado para cena).
 
 ## Stack
 
@@ -38,7 +37,7 @@ index.html  <section data-station="kafka">  ──►  STATIONS.kafka()  ──�
   `src/stations/index.js`.
 - `progress` é contínuo: `2.5` = metade do caminho entre a estação 2 e a 3. `travel()` segura a
   câmera parada perto de cada seção e só viaja no meio do scroll.
-- Cada estação fica em `x = índice × 80`, a não ser que defina `place` (a visão geral usa).
+- Cada estação fica em `x = índice × 80`, a não ser que defina `place`.
 
 ## Contrato de uma estação
 
@@ -148,8 +147,7 @@ caso Frankenstein. Na cena de Kubernetes, os nomes de namespace, pod, job e Cron
 taxas de erro do canário são ilustrativos. Na bancada de "De onde eu vim", o contador de domicílios do IBGE e o site
 `m.exemplo` no celular, os títulos das lombadas, a tela do PDA, as fórmulas do quadro e a folha de
 simulado da Anatel são ilustrativos (o PDA em si é fiel: o Censo 2010 foi coletado com eles); os títulos de post no notebook são reais (do blog) e devem
-acompanhar o blog se ele mudar. Na abertura, a tecnologia "Circuitos" e as ligações tracejadas entre fases (eletrônica ↔ rádio,
-estatística ↔ blog) são interpretação, não itens do perfil. Já as práticas mostradas (escala por lag, deploy gradual,
+acompanhar o blog se ele mudar. Já as práticas mostradas (escala por lag, deploy gradual,
 canário com rollback, jobs pontuais e agendados, réplicas em duas zonas) foram confirmadas pelo Lucas. Que a Porto tinha pipelines da proposta
 até a emissão da apólice veio do próprio Lucas, não do LinkedIn. Não descrevem sistemas reais das empresas. Mantenha assim:
 o currículo não deve sugerir detalhes internos que não estão no perfil.

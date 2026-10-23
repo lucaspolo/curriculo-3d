@@ -73,7 +73,8 @@ function revealScene(section) {
 /** Horizontal slice of the screen (0–1) left free by the text cards and the section dots. */
 function freeArea() {
   const w = window.innerWidth;
-  const card = document.querySelector(".panel:not(.hero) .card").getBoundingClientRect();
+  // Any card beside a scene works: they all share the same width and left margin.
+  const card = document.querySelector(".panel:not(.centered) .card").getBoundingClientRect();
   const dots = document.querySelector(".dots").getBoundingClientRect();
   return { left: (card.right + 24) / w, right: (dots.left - 12) / w };
 }
