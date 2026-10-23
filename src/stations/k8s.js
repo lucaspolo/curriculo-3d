@@ -3,6 +3,7 @@
 // run a one-off job, or knock a pod down and watch it come back.
 import * as THREE from "three";
 import { COLORS, glow, label, pickable, Flow, roundedBox, outline, damp } from "../lib/kit.js";
+import { tr } from "../i18n.js";
 
 const SLOTS_X = Array.from({ length: 10 }, (_, i) => -9 + i * 2); // x < 0 is zone a, x > 0 zone b
 const INGRESS = new THREE.Vector3(0, 1.2, 10.5);
@@ -10,17 +11,23 @@ const PENDING = 1.1; // seconds from scheduled to ready
 const VERSION_COLORS = [COLORS.k8s, COLORS.llm, COLORS.kafka, COLORS.message];
 
 const NAMESPACES = [
-  { key: "front", z: 6.5, color: COLORS.kafka, min: 2, max: 6, text: "Front-ends em Next.js. Escalam com o número de requisições." },
-  { key: "api", z: 2.5, color: COLORS.k8s, min: 3, max: 9, text: "Serviços com milhões de requisições por dia. Escalam com a carga." },
+  { key: "front", z: 6.5, color: COLORS.kafka, min: 2, max: 6, text: tr("Front-ends em Next.js. Escalam com o número de requisições.", "Next.js front ends. They scale with the number of requests."),
+  },
+  { key: "api", z: 2.5, color: COLORS.k8s, min: 3, max: 9, text: tr("Serviços com milhões de requisições por dia. Escalam com a carga.", "Services handling millions of requests a day. They scale with load."),
+  },
   {
     key: "pipeline",
     z: -1.5,
     color: COLORS.privacy,
     min: 2,
     max: 9,
-    text: "Os workers das etapas do Kafka (normalização, classificação, Trust & Privacy). Escalam pelo lag do tópico.",
+    text: tr(
+      "Os workers das etapas do Kafka (normalização, classificação, Trust & Privacy). Escalam pelo lag do tópico.",
+      "Workers for the Kafka stages (normalization, classification, Trust & Privacy). They scale with topic lag.",
+    ),
   },
-  { key: "jobs", z: -5.5, color: COLORS.ok, min: 0, max: 4, text: "Jobs pontuais e agendados: rodam até terminar e somem." },
+  { key: "jobs", z: -5.5, color: COLORS.ok, min: 0, max: 4, text: tr("Jobs pontuais e agendados: rodam até terminar e somem.", "One-off and scheduled jobs: they run to completion and go away."),
+  },
 ];
 
 const STATE_COLORS = {
@@ -57,8 +64,8 @@ export function createK8s() {
     group.add(dash);
   }
   [
-    ["zona a", -6],
-    ["zona b", 6],
+    [tr("zona a", "zone a"), -6],
+    [tr("zona b", "zone b"), 6],
   ].forEach(([name, x]) => {
     const l = label(name, "small plain");
     l.position.set(x, 0.3, -8.4);
@@ -139,9 +146,9 @@ export function createK8s() {
     s.info.title = `pod ${s.name} · ${names[s.state] ?? ""}`;
     s.info.text =
       s.ns.key === "jobs"
-        ? "Job: roda até terminar e é removido depois."
+        ? tr("Job: roda até terminar e é removido depois.", "Job: runs to completion and is removed afterwards.")
         : s.state === "running"
-          ? "Clique para derrubar este pod e ver o Kubernetes recriá-lo."
+          ? tr("Clique para derrubar este pod e ver o Kubernetes recriá-lo.", "Click to knock this pod down and watch Kubernetes recreate it.")
           : "";
   }
 
@@ -176,7 +183,7 @@ export function createK8s() {
     stop(s, "failed");
     focusOn(s.ns.key, 5);
     healing = s.ns;
-    setStatus(`pod ${s.name} caiu → o Kubernetes está recriando…`, true, s.ns);
+    setStatus(tr(`pod ${s.name} caiu → o Kubernetes está recriando…`, `pod ${s.name} went down → Kubernetes is recreating it…`), true, s.ns);
   }
 
   // Labels: deploy status, Kafka lag, CronJob
@@ -211,8 +218,11 @@ export function createK8s() {
   lagLabel.position.set(-11.5, 1.3, byKey.pipeline.z);
   group.add(lagLabel);
   pickable(pickables, queue, {
-    title: "Lag do tópico no Kafka",
-    text: "Mensagens esperando consumo. Quanto maior a fila, mais workers o autoscaler sobe.",
+    title: tr("Lag do tópico no Kafka", "Kafka topic lag"),
+    text: tr(
+      "Mensagens esperando consumo. Quanto maior a fila, mais workers o autoscaler sobe.",
+      "Messages waiting to be consumed. The longer the queue, the more workers the autoscaler adds.",
+    ),
   });
 
   const cron = new THREE.Group();
@@ -228,10 +238,11 @@ export function createK8s() {
     new THREE.MeshBasicMaterial({ color: 0xffffff }),
   );
   cron.add(hand);
-  const cronLabel = label("CronJob · reindexação", "small");
+  const cronLabel = label(tr("CronJob · reindexação", "CronJob · reindex"), "small");
   cronLabel.position.set(0, 1, 0);
   cron.add(cronLabel);
-  pickable(pickables, clockFace, { title: "CronJob", text: "Dispara jobs agendados, como uma reindexação periódica." });
+  pickable(pickables, clockFace, { title: "CronJob", text: tr("Dispara jobs agendados, como uma reindexação periódica.", "Fires scheduled jobs, such as a periodic reindex."),
+  });
 
   // Ingress
   const ingress = new THREE.Mesh(
@@ -243,7 +254,8 @@ export function createK8s() {
   const ingressLabel = label("Ingress");
   ingressLabel.position.set(0, 1.7, 0);
   ingress.add(ingressLabel);
-  pickable(pickables, ingress, { title: "Ingress", text: "Entrada do cluster: distribui as requisições entre os pods do front." });
+  pickable(pickables, ingress, { title: "Ingress", text: tr("Entrada do cluster: distribui as requisições entre os pods do front.", "The cluster entry point: spreads requests across the front pods."),
+  });
 
   const top = (s) => s.mesh.position.clone().add(new THREE.Vector3(0, 0.7, 0));
   const arc = (a, b, h = 2) => {
@@ -313,7 +325,7 @@ export function createK8s() {
     canaryHits = 0;
     if (kind === "canary") {
       deploy.surge = start(api, { version: deploy.version, buggy: true });
-      setStatus(`canário v${deploy.version}: recebendo 30% do tráfego…`);
+      setStatus(tr(`canário v${deploy.version}: recebendo 30% do tráfego…`, `canary v${deploy.version}: receiving 30% of traffic…`));
     } else {
       setStatus(`deploy v${deploy.version}: 0/${deploy.total} pods`);
     }
@@ -333,10 +345,15 @@ export function createK8s() {
         deploy.surge = null;
       }
       const share = Math.round((fresh / Math.max(1, running(api).length)) * 100);
-      setStatus(`deploy v${deploy.version}: ${fresh}/${deploy.total} pods · ${share}% do tráfego`);
+      setStatus(
+          tr(
+            `deploy v${deploy.version}: ${fresh}/${deploy.total} pods · ${share}% do tráfego`,
+            `deploy v${deploy.version}: ${fresh}/${deploy.total} pods · ${share}% of traffic`,
+          ),
+        );
       if (!old.length && !deploy.surge) {
         api.version = deploy.version;
-        setStatus(`v${deploy.version} em produção ✓`);
+        setStatus(tr(`v${deploy.version} em produção ✓`, `v${deploy.version} in production ✓`));
         deploy = null;
         statusTimer = 4;
       }
@@ -344,12 +361,15 @@ export function createK8s() {
       const c = deploy.surge;
       if (!deploy.done && (c.state === "off" || (c.state === "running" && deploy.timer > 4.5))) {
         const rate = canaryHits ? Math.round((errors / canaryHits) * 100) : 100;
-        setStatus(`canário v${deploy.version}: ${rate}% de erros → rollback automático`, true);
+        setStatus(
+          tr(`canário v${deploy.version}: ${rate}% de erros → rollback automático`, `canary v${deploy.version}: ${rate}% errors → automatic rollback`),
+          true,
+        );
         if (c.state === "running") stop(c, "failed");
         deploy.done = deploy.timer;
       }
       if (deploy.done && deploy.timer > deploy.done + 2.5) {
-        setStatus(`rollback ✓ · v${api.version} segue em produção`);
+        setStatus(tr(`rollback ✓ · v${api.version} segue em produção`, `rollback ✓ · v${api.version} stays in production`));
         deploy = null;
         statusTimer = 4;
       }
@@ -363,7 +383,7 @@ export function createK8s() {
     s.duration = 3.5 + Math.random() * 2.5;
     if (manual) {
       focusOn("jobs", PENDING + s.duration + 2.5);
-      setStatus(`job ${s.name}: rodando até terminar…`, false, byKey.jobs);
+      setStatus(tr(`job ${s.name}: rodando até terminar…`, `job ${s.name}: running to completion…`), false, byKey.jobs);
       s.manual = true;
     }
   }
@@ -383,7 +403,7 @@ export function createK8s() {
     actions: {
       deploy: () => beginDeploy("rolling"),
       baddeploy: () => beginDeploy("canary"),
-      job: () => runJob("reprocessar-processos", true),
+      job: () => runJob(tr("reprocessar-processos", "reprocess-cases"), true),
     },
     update(dt, time, focus) {
       // Slow, smooth load: one cycle every ~50 s, so replicas change rarely enough to follow.
@@ -418,7 +438,7 @@ export function createK8s() {
         });
       }
       if (healing && running(healing).length >= healing.desired) {
-        setStatus("pod recriado ✓ · o serviço não parou", false, healing);
+        setStatus(tr("pod recriado ✓ · o serviço não parou", "pod recreated ✓ · the service never stopped"), false, healing);
         statusTimer = 3;
         healing = null;
       }
@@ -432,7 +452,7 @@ export function createK8s() {
       hand.rotation.z = -(1 - cronTimer / 20) * Math.PI * 2;
       if (cronTimer <= 0) {
         cronTimer = 20;
-        if (!spotlight) runJob("reindexacao");
+        if (!spotlight) runJob(tr("reindexacao", "reindex"));
       }
 
       namespaces.forEach((ns) =>
@@ -451,7 +471,7 @@ export function createK8s() {
             if (s.progress >= 1) {
               stop(s, "completed");
               if (s.manual) {
-                setStatus(`job ${s.name}: concluído ✓ e removido`, false, byKey.jobs);
+                setStatus(tr(`job ${s.name}: concluído ✓ e removido`, `job ${s.name}: completed ✓ and removed`), false, byKey.jobs);
                 statusTimer = 3;
                 s.manual = false;
               }
@@ -514,7 +534,7 @@ export function createK8s() {
         `front · ${running(byKey.front).length} pods`,
         `api · ${running(byKey.api).length} pods · v${byKey.api.version}`,
         `pipeline · ${running(byKey.pipeline).length} pods`,
-        `jobs · ${live(byKey.jobs).length} rodando`,
+        `jobs · ${live(byKey.jobs).length} ${tr("rodando", "running")}`,
         `lag: ${Math.round(lag)} msgs`,
       ];
       const key = text.join("|");

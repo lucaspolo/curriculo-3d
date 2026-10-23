@@ -5,8 +5,9 @@ profissional vira uma cena animada (Kafka, Trust & Privacy, LLMs, Kubernetes, Ma
 origens) e termina num card de contato.
 
 O conteúdo foi tirado do LinkedIn (`linkedin.com/in/lucaspolo`) em 21/10/2026. Ao atualizar o
-currículo, atualize o texto em `index.html` e, se mudar algo que aparece nas cenas (nomes de
-serviços, anos da linha do tempo), o módulo da estação correspondente. A abertura não
+currículo, atualize o texto em `index.html` **e** a versão em inglês em `src/i18n.js` (ver
+[Idiomas](#idiomas)) e, se mudar algo que aparece nas cenas (nomes de serviços, anos da linha do
+tempo), o módulo da estação correspondente. A abertura não
 tem cena 3D, por decisão do Lucas: o card centralizado (nome, resumo, tecnologias e contato) é a
 abertura inteira, e `src/stations/hero.js` só dá à câmera um ponto de partida. Já houve ali uma rede de
 nós, uma constelação de fases e uma linha do tempo animada; todas foram descartadas por poluírem a
@@ -39,6 +40,32 @@ index.html  <section data-station="kafka">  ──►  STATIONS.kafka()  ──�
   câmera parada perto de cada seção e só viaja no meio do scroll.
 - Cada estação fica em `x = índice × 80`, a não ser que defina `place`.
 
+## Idiomas
+
+O site existe em português e inglês. O português é o texto do `index.html`; o inglês é aplicado por
+cima, no carregamento, por `applyPageLanguage()` em `src/i18n.js`.
+
+- **Página:** cada elemento traduzível tem `data-i18n="chave"` (troca o `innerHTML`),
+  `data-i18n-title` ou `data-i18n-label` (`aria-label`). A chave aponta para o dicionário `EN` em
+  `src/i18n.js`. Texto novo no HTML sem chave fica em português na versão em inglês.
+- **Cenas:** rótulos, tooltips e textos desenhados em canvas usam `tr("português", "english")`, com as
+  duas versões lado a lado no código. Números e moeda usam `toLocaleString(locale)`; a moeda continua
+  BRL nas duas línguas.
+- **Detecção** (`pickLanguage()` em `src/lib/language.js`, testada em `tests/`): `?lang=` na URL,
+  depois a escolha salva em `localStorage` (`lang`), depois `navigator.languages` (o primeiro `pt*` ou
+  `en*`) e, por fim, inglês.
+- **Troca:** o seletor PT | EN no canto salva a escolha e recarrega a página com `?lang=` mantendo o
+  `#hash` da seção atual. As cenas leem a língua uma vez, na criação, por isso a troca recarrega em vez
+  de redesenhar.
+- Ficam em português de propósito: os títulos dos posts do blog no notebook (são reais), os nomes
+  oficiais dos cursos nas dicas das certificações e o código Informix/Java da Porto. O `<noscript>`
+  traz as duas línguas, porque sem JavaScript não há como escolher.
+- ⚠️ Na petição da cena de privacidade, as quebras de linha fazem parte de cada versão (a folha tem
+  largura fixa). Ao mudar uma frase, confira se a linha ainda cabe na folha.
+- ⚠️ Nas vinhetas de LLM, a chave interna dos campos (`tipo`, `acao`…) liga o trecho destacado na
+  sentença à linha do JSON e ao selo de validação; só o nome exibido muda por língua (`FIELD_NAMES`).
+  O nome de cada ferramenta exibido sob os blocos sai do texto de `call` antes do `(`.
+
 ## Contrato de uma estação
 
 ```js
@@ -58,10 +85,12 @@ index.html  <section data-station="kafka">  ──►  STATIONS.kafka()  ──�
 
 ```
 index.html            todo o texto do currículo (fonte única do conteúdo)
-src/main.js           scroll → progress, pontos de navegação, botões, carga do 3D
+src/i18n.js           língua da página, tr() das cenas e o dicionário EN do HTML
+src/main.js           scroll → progress, pontos de navegação, botões, seletor de língua, carga do 3D
 src/wheel-step.js     um gesto de roda/trackpad = um tópico (desktop)
 src/stage.js          renderer, bloom, câmera guiada pelo scroll, picking e tooltip
 src/lib/progress.js   matemática pura do scroll (testada em tests/)
+src/lib/language.js   escolha da língua, pura (testada em tests/)
 src/lib/kit.js        cores, rótulos, caixas com borda, tubos e Flow (mensagens nos tubos)
 src/stations/*.js     uma cena por arquivo (partes grandes à parte: magalu-logistics, privacy-cascade,
                       llm-vignettes, origins-details com os detalhes de cada objeto da bancada,
@@ -73,7 +102,7 @@ tests/                node --test
 
 ```bash
 npm run dev       # http://localhost:5174
-npm test          # testes da matemática de scroll
+npm test          # testes da matemática de scroll e da escolha de língua
 npm run build     # gera dist/ com base relativa, publicável em qualquer subpasta
 ```
 
@@ -142,7 +171,8 @@ por pensão alimentícia (personagens de Mary Shelley, em domínio público). Os
 verificador inválido de propósito, para nunca coincidirem com um CPF real; mantenha assim se trocar os
 números. A divisão da cascata (60% sem dado pessoal, 34% NER, 6% LLM) também é ilustrativa. Nas vinhetas
 de LLM, também são ilustrativos: os nomes de etapa, ferramenta e tópico (`extrair_decisao`,
-`buscar_processo`, `decisoes.estruturadas`), os campos do JSON, a issue, o diff e o PR. Elas continuam o
+`buscar_processo`, `decisoes.estruturadas` e os equivalentes em inglês), os campos do JSON, a issue,
+o diff e o PR. Elas continuam o
 caso Frankenstein. Na cena de Kubernetes, os nomes de namespace, pod, job e CronJob, as versões e as
 taxas de erro do canário são ilustrativos. Na bancada de "De onde eu vim", o contador de domicílios do IBGE e o site
 `m.exemplo` no celular, os títulos das lombadas, a tela do PDA, as fórmulas do quadro e a folha de

@@ -1,6 +1,8 @@
 // The three LLM vignettes, drawn on 2D canvases. Each one is a pure function of its own clock `t`, so the
 // scene can restart, pause or jump to the end. All content continues the fictional Frankenstein case.
 
+import { tr } from "../i18n.js";
+
 export const CW = 1280;
 export const CH = 800;
 
@@ -91,38 +93,66 @@ const FIELDS = {
   partes: UI.pink,
 };
 
-const SOURCE = [
-  [["SENTENÇA", "tipo"]],
-  ["Vistos. ", ["[PESSOA]", "partes"], " ajuizou"],
-  [["ação de alimentos", "acao"], " contra ", ["[PESSOA]", "partes"], "."],
-  ["Comprovadas a criação e a necessidade"],
-  ["do autor, ", ["JULGO PROCEDENTE", "resultado"], " o"],
-  ["pedido e fixo os alimentos em"],
-  [["30% dos rendimentos", "alimentos"], " do réu."],
-];
+// How each field is named in the JSON and in the validation chips.
+const FIELD_NAMES = tr(
+  { tipo: "tipo", acao: "acao", resultado: "resultado", alimentos: "alimentos", partes: "partes" },
+  { tipo: "type", acao: "claim", resultado: "outcome", alimentos: "support", partes: "parties" },
+);
 
-const JSON_LINES = [
-  ["{", null],
-  ['  "tipo": "sentença",', "tipo"],
-  ['  "acao": "alimentos",', "acao"],
-  ['  "resultado": "procedente",', "resultado"],
-  ['  "alimentos": "30% dos rendimentos",', "alimentos"],
-  ['  "partes": ["[PESSOA]", "[PESSOA]"]', "partes"],
-  ["}", null],
-];
+const SOURCE = tr(
+  [
+    [["SENTENÇA", "tipo"]],
+    ["Vistos. ", ["[PESSOA]", "partes"], " ajuizou"],
+    [["ação de alimentos", "acao"], " contra ", ["[PESSOA]", "partes"], "."],
+    ["Comprovadas a criação e a necessidade"],
+    ["do autor, ", ["JULGO PROCEDENTE", "resultado"], " o"],
+    ["pedido e fixo os alimentos em"],
+    [["30% dos rendimentos", "alimentos"], " do réu."],
+  ],
+  [
+    [["JUDGMENT", "tipo"]],
+    ["Having reviewed the case, ", ["[PERSON]", "partes"], " filed"],
+    [["a child support claim", "acao"], " against ", ["[PERSON]", "partes"], "."],
+    ["Given the creation and the plaintiff's"],
+    ["need, I ", ["RULE FOR THE PLAINTIFF", "resultado"]],
+    ["and set support at"],
+    [["30% of the defendant's income", "alimentos"], "."],
+  ],
+);
+
+const JSON_LINES = tr(
+  [
+    ["{", null],
+    ['  "tipo": "sentença",', "tipo"],
+    ['  "acao": "alimentos",', "acao"],
+    ['  "resultado": "procedente",', "resultado"],
+    ['  "alimentos": "30% dos rendimentos",', "alimentos"],
+    ['  "partes": ["[PESSOA]", "[PESSOA]"]', "partes"],
+    ["}", null],
+  ],
+  [
+    ["{", null],
+    ['  "type": "judgment",', "tipo"],
+    ['  "claim": "child support",', "acao"],
+    ['  "outcome": "granted",', "resultado"],
+    ['  "support": "30% of income",', "alimentos"],
+    ['  "parties": ["[PERSON]", "[PERSON]"]', "partes"],
+    ["}", null],
+  ],
+);
 const JSON_TEXT = JSON_LINES.map(([l]) => l).join("\n");
 const TYPE_START = 0.8;
 const TYPE_RATE = 42;
 
 export const pipeline = {
-  title: "LLM no pipeline",
+  title: tr("LLM no pipeline", "LLM in the pipeline"),
   duration: 11,
   phaseAt(t) {
     const typed = (t - TYPE_START) * TYPE_RATE;
     return { llm: typed > 0 && typed < JSON_TEXT.length };
   },
   draw(ctx, t) {
-    chrome(ctx, "etapa do pipeline: extrair_decisao · LLM", UI.teal);
+    chrome(ctx, tr("etapa do pipeline: extrair_decisao · LLM", "pipeline step: extract_ruling · LLM"), UI.teal);
     const typed = Math.max(0, Math.floor((t - TYPE_START) * TYPE_RATE));
 
     // Which fields have been written so far decides which source passages light up.
@@ -136,8 +166,8 @@ export const pipeline = {
     ctx.textAlign = "left";
     ctx.fillStyle = UI.muted;
     ctx.font = MONO(400, 18);
-    ctx.fillText("entrada · decisoes.anonimizadas", 48, 112);
-    ctx.fillText("saída estruturada (JSON)", 668, 112);
+    ctx.fillText(tr("entrada · decisoes.anonimizadas", "input · rulings.anonymized"), 48, 112);
+    ctx.fillText(tr("saída estruturada (JSON)", "structured output (JSON)"), 668, 112);
     roundRect(ctx, 40, 128, 590, 470, 12, UI.panel, UI.border);
     roundRect(ctx, 650, 128, 590, 470, 12, UI.panel, UI.border);
 
@@ -176,16 +206,16 @@ export const pipeline = {
     if (t > validateStart) {
       ctx.fillStyle = UI.muted;
       ctx.font = MONO(400, 18);
-      ctx.fillText("validação do schema", 48, 640);
+      ctx.fillText(tr("validação do schema", "schema validation"), 48, 640);
       let x = 48;
       Object.entries(FIELDS).forEach(([key, color], i) => {
-        if (t > validateStart + 0.2 * i) x += chip(ctx, `${key} ✓`, x, 682, color) + 12;
+        if (t > validateStart + 0.2 * i) x += chip(ctx, `${FIELD_NAMES[key]} ✓`, x, 682, color) + 12;
       });
     }
     if (t > validateStart + 1.6) {
       ctx.font = MONO(600, 22);
       ctx.fillStyle = UI.teal;
-      ctx.fillText("→ publicado em decisoes.estruturadas", 48, 752);
+      ctx.fillText(tr("→ publicado em decisoes.estruturadas", "→ published to rulings.structured"), 48, 752);
     }
   },
 };
@@ -193,21 +223,33 @@ export const pipeline = {
 // ---------------------------------------------------------------------------------------------------
 // 2. Agent in the product: question, tool loop, grounded answer.
 
-export const TOOLS = [
-  { call: 'buscar_processo("1818.0001-07")', result: "Ação de alimentos · sentença procedente" },
-  { call: "consultar_decisao(tipo=\"sentença\")", result: "30% dos rendimentos desde out/1818" },
-  { call: "calcular_atualizacao(parcelas=12)", result: "total atualizado: R$ 18.180,00" },
-];
-const QUESTION = "Sou advogado do autor no processo 1818.0001-07. Quanto o réu deve de pensão atrasada?";
-const ANSWER =
-  "Pela sentença, o réu deve 30% dos rendimentos desde outubro de 1818. Com 12 parcelas em atraso, o total atualizado é de R$ 18.180,00.";
+export const TOOLS = tr(
+  [
+    { call: 'buscar_processo("1818.0001-07")', result: "Ação de alimentos · sentença procedente" },
+    { call: 'consultar_decisao(tipo="sentença")', result: "30% dos rendimentos desde out/1818" },
+    { call: "calcular_atualizacao(parcelas=12)", result: "total atualizado: R$ 18.180,00" },
+  ],
+  [
+    { call: 'find_case("1818.0001-07")', result: "Child support claim · judgment: granted" },
+    { call: 'get_ruling(type="judgment")', result: "30% of income since Oct 1818" },
+    { call: "calc_arrears(installments=12)", result: "updated total: R$ 18,180.00" },
+  ],
+);
+const QUESTION = tr(
+  "Sou advogado do autor no processo 1818.0001-07. Quanto o réu deve de pensão atrasada?",
+  "I represent the plaintiff in case 1818.0001-07. How much child support does the defendant owe?",
+);
+const ANSWER = tr(
+  "Pela sentença, o réu deve 30% dos rendimentos desde outubro de 1818. Com 12 parcelas em atraso, o total atualizado é de R$ 18.180,00.",
+  "Under the judgment, the defendant owes 30% of their income since October 1818. With 12 installments overdue, the updated total is R$ 18,180.00.",
+);
 const TOOL_START = 2;
 const TOOL_STEP = 1.7;
 const ANSWER_START = TOOL_START + TOOLS.length * TOOL_STEP + 0.3;
 const ANSWER_RATE = 70;
 
 export const product = {
-  title: "Agente no produto",
+  title: tr("Agente no produto", "Agent in the product"),
   duration: 12,
   phaseAt(t) {
     const k = (t - TOOL_START) / TOOL_STEP;
@@ -219,7 +261,7 @@ export const product = {
     };
   },
   draw(ctx, t) {
-    chrome(ctx, "assistente jurídico · agente com ferramentas", UI.amber);
+    chrome(ctx, tr("assistente jurídico · agente com ferramentas", "legal assistant · agent with tools"), UI.amber);
     ctx.textAlign = "left";
 
     if (t > 0.3) {
@@ -234,7 +276,7 @@ export const product = {
     if (t > 1 && t < TOOL_START) {
       ctx.fillStyle = UI.violet;
       ctx.font = MONO(400, 22);
-      ctx.fillText(`pensando${".".repeat(1 + (Math.floor(t * 4) % 3))}`, 48, 244);
+      ctx.fillText(`${tr("pensando", "thinking")}${".".repeat(1 + (Math.floor(t * 4) % 3))}`, 48, 244);
     }
 
     TOOLS.forEach((tool, i) => {
@@ -251,7 +293,7 @@ export const product = {
       } else {
         ctx.fillStyle = UI.muted;
         ctx.font = MONO(400, 21);
-        ctx.fillText(`  executando${".".repeat(1 + (Math.floor(t * 4) % 3))}`, 48, y + 32);
+        ctx.fillText(`  ${tr("executando", "running")}${".".repeat(1 + (Math.floor(t * 4) % 3))}`, 48, y + 32);
       }
     });
 
@@ -268,7 +310,7 @@ export const product = {
         left -= l.length + 1;
       });
       if (shown.length === ANSWER.length) {
-        chip(ctx, "fonte: processo 1818.0001-07 · sentença", 40, 640, UI.teal);
+        chip(ctx, tr("fonte: processo 1818.0001-07 · sentença", "source: case 1818.0001-07 · judgment"), 40, 640, UI.teal);
       }
     }
   },
@@ -278,30 +320,53 @@ export const product = {
 // 3. Coding agent: from an issue to an approved pull request.
 
 const STEPS = [
-  { name: "reproduzir o erro", start: 0.8, end: 2.2 },
-  { name: "escrever a correção", start: 2.2, end: 4.6 },
-  { name: "rodar os testes", start: 4.6, end: 6.8 },
-  { name: "abrir o PR", start: 6.8, end: 8 },
-  { name: "revisão humana", start: 8, end: 9.8 },
+  { name: tr("reproduzir o erro", "reproduce the bug"), start: 0.8, end: 2.2 },
+  { name: tr("escrever a correção", "write the fix"), start: 2.2, end: 4.6 },
+  { name: tr("rodar os testes", "run the tests"), start: 4.6, end: 6.8 },
+  { name: tr("abrir o PR", "open the PR"), start: 6.8, end: 8 },
+  { name: tr("revisão humana", "human review"), start: 8, end: 9.8 },
 ];
-const OLD_LINE = '-     return parte["nome"]';
-const NEW_LINE = '+     return parte.get("nome") or SEM_NOME_DE_REGISTRO';
-const TESTS = ["test_parte_sem_nome", "test_parte_com_nome", "test_partes_multiplas"];
+// The code shown is illustrative and follows the page language, identifiers included.
+const CODE = tr(
+  {
+    file: "extrator.py",
+    def: "  def nome_da_parte(parte):",
+    before: '      return parte["nome"]',
+    old: '-     return parte["nome"]',
+    new: '+     return parte.get("nome") or SEM_NOME_DE_REGISTRO',
+    test: "$ pytest tests/test_extrator.py",
+    error: "KeyError: 'nome'",
+    tests: ["test_parte_sem_nome", "test_parte_com_nome", "test_partes_multiplas"],
+  },
+  {
+    file: "extractor.py",
+    def: "  def party_name(party):",
+    before: '      return party["name"]',
+    old: '-     return party["name"]',
+    new: '+     return party.get("name") or NO_REGISTERED_NAME',
+    test: "$ pytest tests/test_extractor.py",
+    error: "KeyError: 'name'",
+    tests: ["test_party_without_name", "test_party_with_name", "test_multiple_parties"],
+  },
+);
+const OLD_LINE = CODE.old;
+const NEW_LINE = CODE.new;
+const TESTS = CODE.tests;
 
 export const coding = {
-  title: "Agente de código",
+  title: tr("Agente de código", "Coding agent"),
   duration: 12,
   phaseAt(t) {
     return { llm: t > STEPS[0].start && t < STEPS[1].end };
   },
   draw(ctx, t) {
-    chrome(ctx, "agente de código · issue #1818", UI.green);
+    chrome(ctx, tr("agente de código · issue #1818", "coding agent · issue #1818"), UI.green);
     ctx.textAlign = "left";
 
     roundRect(ctx, 40, 84, CW - 80, 54, 10, UI.panel, UI.border);
     ctx.font = SANS(600, 24);
     ctx.fillStyle = UI.text;
-    ctx.fillText("#1818 · O extrator falha quando a parte não tem nome de registro", 60, 120);
+    ctx.fillText(tr("#1818 · O extrator falha quando a parte não tem nome de registro", "#1818 · The extractor fails when a party has no registered name"), 60, 120);
 
     // Step list
     STEPS.forEach((s, i) => {
@@ -320,10 +385,10 @@ export const coding = {
     roundRect(ctx, 330, 160, 910, 170, 10, UI.panel, UI.border);
     ctx.font = MONO(400, 20);
     ctx.fillStyle = UI.muted;
-    ctx.fillText("extrator.py", 350, 192);
+    ctx.fillText(CODE.file, 350, 192);
     ctx.font = MONO(400, 22);
     ctx.fillStyle = UI.text;
-    ctx.fillText("  def nome_da_parte(parte):", 350, 232);
+    ctx.fillText(CODE.def, 350, 232);
     if (t >= STEPS[1].start) {
       ctx.fillStyle = "#ff6b6b26";
       ctx.fillRect(342, 244, 890, 34);
@@ -337,18 +402,18 @@ export const coding = {
         ctx.fillText(NEW_LINE.slice(0, Math.ceil(k * NEW_LINE.length)), 350, 308);
       }
     } else {
-      ctx.fillText('      return parte["nome"]', 350, 270);
+      ctx.fillText(CODE.before, 350, 270);
     }
 
     // Terminal
     roundRect(ctx, 330, 346, 910, 214, 10, "#05090f", UI.border);
     ctx.font = MONO(400, 21);
     ctx.fillStyle = UI.muted;
-    ctx.fillText("$ pytest tests/test_extrator.py", 350, 382);
+    ctx.fillText(CODE.test, 350, 382);
     if (t >= STEPS[0].start && t < STEPS[2].start) {
       ctx.fillStyle = UI.red;
-      ctx.fillText("test_parte_sem_nome ............ FAILED", 350, 418);
-      ctx.fillText("KeyError: 'nome'", 350, 452);
+      ctx.fillText(`${TESTS[0]} ............ FAILED`, 350, 418);
+      ctx.fillText(CODE.error, 350, 452);
     } else if (t >= STEPS[2].start) {
       TESTS.forEach((name, i) => {
         if (t < STEPS[2].start + 0.5 + i * 0.5) return;
@@ -367,14 +432,14 @@ export const coding = {
       roundRect(ctx, 330, 578, 910, 176, 10, UI.panel, UI.green);
       ctx.font = SANS(600, 24);
       ctx.fillStyle = UI.text;
-      ctx.fillText("PR #1819 · Trata parte sem nome de registro", 352, 620);
+      ctx.fillText(tr("PR #1819 · Trata parte sem nome de registro", "PR #1819 · Handle parties with no registered name"), 352, 620);
       ctx.font = MONO(400, 20);
       ctx.fillStyle = UI.green;
       ctx.fillText("+3", 352, 656);
       ctx.fillStyle = UI.red;
       ctx.fillText("−1", 392, 656);
       ctx.fillStyle = UI.muted;
-      ctx.fillText("· checks ✓ · aberto pelo agente", 436, 656);
+      ctx.fillText(tr("· checks ✓ · aberto pelo agente", "· checks ✓ · opened by the agent"), 436, 656);
       if (t >= STEPS[4].start) {
         ctx.fillStyle = UI.violet;
         ctx.beginPath();
@@ -388,7 +453,11 @@ export const coding = {
         ctx.font = SANS(400, 22);
         ctx.fillStyle = UI.text;
         const approved = t >= STEPS[4].end;
-        ctx.fillText(approved ? "revisão humana: aprovado ✓" : "revisão humana em andamento…", 404, 716);
+        ctx.fillText(
+          approved ? tr("revisão humana: aprovado ✓", "human review: approved ✓") : tr("revisão humana em andamento…", "human review in progress…"),
+          404,
+          716,
+        );
       }
     }
   },

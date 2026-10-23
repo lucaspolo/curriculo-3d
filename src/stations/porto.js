@@ -2,6 +2,7 @@
 // through the stages and drives off with the issued policy. Informix and Oracle answer every stage.
 import * as THREE from "three";
 import { COLORS, glow, label, pickable, Flow, roundedBox, outline, outlineMaterial, damp } from "../lib/kit.js";
+import { tr, locale } from "../i18n.js";
 import { makeStation } from "./porto-station.js";
 
 const ROAD_Z = 4.6;
@@ -17,40 +18,43 @@ const POOL = 6;
 // The profile mentions receiving the proposal and issuing the policy; the middle stages are illustrative.
 const STAGES = [
   {
-    name: "Proposta recebida",
-    short: "Proposta",
+    name: tr("Proposta recebida", "Proposal received"),
+    short: tr("Proposta", "Proposal"),
     icon: "document",
     x: -9,
     color: COLORS.kafka,
     db: 0,
-    text: "A proposta entra no pipeline e é registrada para seguir pelas etapas.",
+    text: tr(
+      "A proposta entra no pipeline e é registrada para seguir pelas etapas.",
+      "The proposal enters the pipeline and is recorded to move through the stages.",
+    ),
   },
   {
-    name: "Análise de risco",
-    short: "Risco",
+    name: tr("Análise de risco", "Risk analysis"),
+    short: tr("Risco", "Risk"),
     icon: null,
     x: -3,
     color: COLORS.warn,
     db: 0,
-    text: "Avalia o risco da proposta antes de seguir para o cálculo.",
+    text: tr("Avalia o risco da proposta antes de seguir para o cálculo.", "Assesses the proposal's risk before it moves on to pricing."),
   },
   {
-    name: "Cálculo do prêmio",
-    short: "Prêmio",
+    name: tr("Cálculo do prêmio", "Premium calculation"),
+    short: tr("Prêmio", "Premium"),
     icon: "coin",
     x: 3,
     color: COLORS.message,
     db: 1,
-    text: "Calcula o valor do seguro a partir da proposta e do risco.",
+    text: tr("Calcula o valor do seguro a partir da proposta e do risco.", "Prices the insurance from the proposal and its risk."),
   },
   {
-    name: "Emissão da apólice",
-    short: "Emissão",
+    name: tr("Emissão da apólice", "Policy issuance"),
+    short: tr("Emissão", "Issuance"),
     icon: "seal",
     x: 9,
     color: COLORS.ok,
     db: 1,
-    text: "Emite a apólice e entrega ao cliente.",
+    text: tr("Emite a apólice e entrega ao cliente.", "Issues the policy and hands it to the customer."),
   },
 ];
 
@@ -61,10 +65,10 @@ const DATABASES = [
 
 const CAR_COLORS = [COLORS.kafka, COLORS.message, COLORS.privacy, COLORS.k8s, COLORS.llm, COLORS.warn];
 const RISK = [
-  ["baixo", COLORS.ok, -0.9],
-  ["médio", COLORS.warn, 0],
-  ["baixo", COLORS.ok, -0.6],
-  ["moderado", COLORS.message, 0.5],
+  [tr("baixo", "low"), COLORS.ok, -0.9],
+  [tr("médio", "medium"), COLORS.warn, 0],
+  [tr("baixo", "low"), COLORS.ok, -0.6],
+  [tr("moderado", "moderate"), COLORS.message, 0.5],
 ];
 
 const SNIPPETS = [
@@ -383,7 +387,7 @@ export function createPorto() {
     cyl.add(l);
     pickable(pickables, cyl, {
       title: d.name,
-      text: "Banco relacional consultado e atualizado por cada etapa do pipeline.",
+      text: tr("Banco relacional consultado e atualizado por cada etapa do pipeline.", "Relational database read and updated by every pipeline stage."),
     });
     return { ...d, cyl, top: new THREE.Vector3(d.x, 2.3, -5), pulse: 0 };
   });
@@ -392,11 +396,14 @@ export function createPorto() {
   terminal.mesh.position.set(0, 6.2, -9);
   group.add(terminal.mesh);
   pickable(pickables, terminal.mesh, {
-    title: "Java e Informix 4GL",
-    text: "As linguagens do dia a dia na Porto Seguro, sobre bancos Informix e Oracle. Código ilustrativo.",
+    title: tr("Java e Informix 4GL", "Java and Informix 4GL"),
+    text: tr(
+      "As linguagens do dia a dia na Porto Seguro, sobre bancos Informix e Oracle. Código ilustrativo.",
+      "The everyday languages at Porto Seguro, on Informix and Oracle databases. Illustrative code.",
+    ),
   });
 
-  const issuedLabel = label("apólices emitidas: 0");
+  const issuedLabel = label(tr("apólices emitidas: 0", "policies issued: 0"));
   issuedLabel.position.set(10, 0.2, ROAD_Z + 2);
   group.add(issuedLabel);
   let issued = 0;
@@ -413,8 +420,8 @@ export function createPorto() {
     const c = makeCar();
     group.add(c.car);
     pickable(pickables, c.body, {
-      title: "Cliente",
-      text: "Entrega a proposta, acompanha o pipeline e sai com a apólice emitida.",
+      title: tr("Cliente", "Customer"),
+      text: tr("Entrega a proposta, acompanha o pipeline e sai com a apólice emitida.", "Hands in the proposal, follows the pipeline and drives off with the policy issued."),
     });
     return c;
   });
@@ -461,7 +468,7 @@ export function createPorto() {
     s.glow = 1;
     dbQuery(s);
     if (c.stage === 0) {
-      s.info.element.textContent = `proposta nº ${++proposalNumber}`;
+      s.info.element.textContent = `${tr("proposta nº", "proposal #")} ${++proposalNumber}`;
       c.doc.header.material.color.copy(glow(COLORS.kafka, 1.6));
     } else if (c.stage === 1) {
       const [name, color, angle] = RISK[(Math.random() * RISK.length) | 0];
@@ -471,7 +478,7 @@ export function createPorto() {
     } else if (c.stage === 2) {
       c.premium = 900 + Math.random() * 2600;
     } else {
-      s.info.element.textContent = `apólice nº ${++policyNumber}`;
+      s.info.element.textContent = `${tr("apólice nº", "policy #")} ${++policyNumber}`;
     }
   }
 
@@ -479,11 +486,11 @@ export function createPorto() {
     const s = stages[c.stage];
     s.progress = k;
     if (c.stage === 1 && k > 0.6) {
-      s.info.element.textContent = `risco ${c.risk.name}`;
+      s.info.element.textContent = tr(`risco ${c.risk.name}`, `${c.risk.name} risk`);
       c.doc.border.material.color.copy(glow(c.risk.color, 1.4));
     } else if (c.stage === 2) {
-      const value = (c.premium * Math.min(1, k * 1.4)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-      s.info.element.textContent = `prêmio ${value}`;
+      const value = (c.premium * Math.min(1, k * 1.4)).toLocaleString(locale, { style: "currency", currency: "BRL" });
+      s.info.element.textContent = `${tr("prêmio", "premium")} ${value}`;
     } else if (c.stage === 3 && k > 0.5) {
       c.doc.border.material.color.copy(glow(COLORS.ok, 1.8));
       c.doc.header.material.color.copy(glow(COLORS.ok, 1.8));
@@ -566,7 +573,7 @@ export function createPorto() {
           if (c.fly === 1) {
             c.phase = "leaving";
             issued++;
-            issuedLabel.element.textContent = `apólices emitidas: ${issued.toLocaleString("pt-BR")}`;
+            issuedLabel.element.textContent = `${tr("apólices emitidas", "policies issued")}: ${issued.toLocaleString(locale)}`;
           }
         } else if (c.phase === "leaving") {
           carTarget = LEAVE_X + 5;

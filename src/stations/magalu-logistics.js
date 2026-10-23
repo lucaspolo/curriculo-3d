@@ -2,6 +2,7 @@
 // fill up, leave when full, deliver, and back into the dock again.
 import * as THREE from "three";
 import { COLORS, glow, label, outlinedBox, pickable, roundedBox } from "../lib/kit.js";
+import { tr } from "../i18n.js";
 
 const CD = { x: 7, z: 3, w: 4.6, d: 3.5, h: 2.4 };
 const DOCK_Z = CD.z + CD.d / 2; // front wall of the building, where the trailers back in
@@ -19,9 +20,9 @@ const FRONT_ROAD = [
   [-6.5, 12.3],
 ];
 const DESTINATIONS = [
-  { name: "entrega · região A", at: [-3.5, 14.2], via: [[-1.5, 13.3]] },
-  { name: "entrega · região B", at: [-11, 9], via: [...FRONT_ROAD, [-10, 9.8]] },
-  { name: "entrega · região C", at: [-14.5, 1], via: [...FRONT_ROAD, [-11, 8.5], [-13.8, 4]] },
+  { name: tr("entrega · região A", "delivery · region A"), at: [-3.5, 14.2], via: [[-1.5, 13.3]] },
+  { name: tr("entrega · região B", "delivery · region B"), at: [-11, 9], via: [...FRONT_ROAD, [-10, 9.8]] },
+  { name: tr("entrega · região C", "delivery · region C"), at: [-14.5, 1], via: [...FRONT_ROAD, [-11, 8.5], [-13.8, 4]] },
 ];
 
 const ground = (pts) => new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE.Vector3(x, 0, z)));
@@ -111,15 +112,18 @@ export function createLogistics(group, pickables) {
   const roofUnit = new THREE.Mesh(roundedBox(1.2, 0.4, 0.8, 0.08, 2), new THREE.MeshStandardMaterial({ color: 0x3a4458, metalness: 0.6, roughness: 0.4 }));
   roofUnit.position.set(1, CD.h / 2 + 0.2, -0.6);
   building.add(roofUnit);
-  const cdLabel = label("Centro de distribuição");
+  const cdLabel = label(tr("Centro de distribuição", "Distribution center"));
   cdLabel.position.set(0, CD.h / 2 + 0.9, 0);
   building.add(cdLabel);
-  const queueLabel = label("fila: 0 pacotes", "small");
+  const queueLabel = label(tr("fila: 0 pacotes", "queue: 0 packages"), "small");
   queueLabel.position.set(0, CD.h / 2 + 2, 0);
   building.add(queueLabel);
   pickable(pickables, building, {
-    title: "Centro de distribuição",
-    text: "Pedidos viram pacotes com etiqueta e entram nos caminhões. Na Black Friday a fila cresce mais rápido do que a frota consegue levar.",
+    title: tr("Centro de distribuição", "Distribution center"),
+    text: tr(
+      "Pedidos viram pacotes com etiqueta e entram nos caminhões. Na Black Friday a fila cresce mais rápido do que a frota consegue levar.",
+      "Orders become labeled packages and go onto the trucks. On Black Friday the queue grows faster than the fleet can carry it.",
+    ),
   });
   const doorMat = new THREE.MeshBasicMaterial({ color: glow(COLORS.message, 1.1), toneMapped: false });
   DOCKS_X.forEach((x) => {
@@ -182,8 +186,11 @@ export function createLogistics(group, pickables) {
       return p;
     });
     pickable(pickables, parts.cab, {
-      title: "Caminhão",
-      text: "Recebe pacotes na doca e sai para a entrega quando lota. Depois volta e encosta de ré para carregar de novo.",
+      title: tr("Caminhão", "Truck"),
+      text: tr(
+        "Recebe pacotes na doca e sai para a entrega quando lota. Depois volta e encosta de ré para carregar de novo.",
+        "Takes packages at the dock and leaves to deliver once full. Then it comes back and reverses in to load again.",
+      ),
     });
     return { ...parts, dock: d, cargo, state: "loading", reserved: 0, loaded: 0, legs: [], timer: 0 };
   });
@@ -334,7 +341,8 @@ export function createLogistics(group, pickables) {
         d.pad.material.color.setHex(COLORS.dim).lerp(padHot, d.pulse);
       });
 
-      const text = `fila: ${queue >= MAX_QUEUE ? `${MAX_QUEUE}+` : queue} pacotes · ${onRoad} na estrada`;
+      const count = queue >= MAX_QUEUE ? `${MAX_QUEUE}+` : queue;
+      const text = tr(`fila: ${count} pacotes · ${onRoad} na estrada`, `queue: ${count} packages · ${onRoad} on the road`);
       if (text !== lastText) {
         queueLabel.element.textContent = text;
         queueLabel.element.classList.toggle("alert", queue > 30);

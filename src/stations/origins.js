@@ -2,6 +2,7 @@
 // (or its line in the card's timeline) jumps to it; otherwise the spotlight walks the desk on its own.
 import * as THREE from "three";
 import { COLORS, glow, label, pickable, damp, roundedBox, outline } from "../lib/kit.js";
+import { tr } from "../i18n.js";
 import * as details from "./origins-details.js";
 
 const DWELL = 3.4; // seconds the spotlight stays on each object
@@ -164,7 +165,10 @@ function clipboard() {
   paper.mesh.rotation.x = -Math.PI / 2;
   paper.mesh.position.set(0, 0.07, 0.08);
   root.add(paper.mesh);
-  const questions = ["Responsável pelo domicílio", "Número de moradores", "Tipo de domicílio", "Abastecimento de água", "Energia elétrica", "Rendimento"];
+  const questions = tr(
+    ["Responsável pelo domicílio", "Número de moradores", "Tipo de domicílio", "Abastecimento de água", "Energia elétrica", "Rendimento"],
+    ["Head of household", "Number of residents", "Type of dwelling", "Water supply", "Electricity", "Income"],
+  );
   let visited = 312;
   let drawn = "";
   function draw(ticks) {
@@ -179,10 +183,10 @@ function clipboard() {
     ctx.fillText("IBGE", 36, 70);
     ctx.fillStyle = "#1a2236";
     ctx.font = font(600, 24);
-    ctx.fillText("Censo Demográfico 2010", 36, 108);
+    ctx.fillText(tr("Censo Demográfico 2010", "2010 Population Census"), 36, 108);
     ctx.font = font(400, 20);
     ctx.fillStyle = "#4a5570";
-    ctx.fillText("Questionário básico", 36, 138);
+    ctx.fillText(tr("Questionário básico", "Basic questionnaire"), 36, 138);
     questions.forEach((q, i) => {
       const y = 200 + i * 62;
       ctx.strokeStyle = "#4a5570";
@@ -203,7 +207,7 @@ function clipboard() {
     });
     ctx.fillStyle = "#1f4f8f";
     ctx.font = font(700, 22);
-    ctx.fillText(`domicílios visitados: ${visited}`, 36, 640);
+    ctx.fillText(`${tr("domicílios visitados", "households visited")}: ${visited}`, 36, 640);
     paper.texture.needsUpdate = true;
   }
   draw(questions.length);
@@ -260,17 +264,17 @@ function oldPhone() {
     ctx.strokeStyle = "#1d2a14";
     if (k < 0.4) {
       ctx.font = font(600, 22, true);
-      ctx.fillText("carregando…", 50, 110);
+      ctx.fillText(tr("carregando…", "loading…"), 50, 110);
       ctx.strokeRect(40, 135, 220, 20);
       ctx.fillRect(44, 139, 212 * (k / 0.4), 12);
     } else {
       ctx.fillRect(0, 0, 300, 44);
       ctx.fillStyle = "#9fb88a";
       ctx.font = font(700, 22, true);
-      ctx.fillText("m.exemplo", 14, 30);
+      ctx.fillText(tr("m.exemplo", "m.example"), 14, 30);
       ctx.fillStyle = "#1d2a14";
       ctx.font = font(400, 20, true);
-      ["> Ofertas", "> Produtos", "> Contato"].forEach((t, i) => ctx.fillText(t, 14, 80 + i * 36));
+      tr(["> Ofertas", "> Produtos", "> Contato"], ["> Deals", "> Products", "> Contact"]).forEach((t, i) => ctx.fillText(t, 14, 80 + i * 36));
       ctx.font = font(400, 15, true);
       ctx.fillText("PHP · CodeIgniter", 14, 222);
     }
@@ -626,21 +630,21 @@ function justiceScale() {
 
 const OBJECTS = [
   // Front row
-  { year: "2006", short: "Técnico em programação", col: 0, row: 0, build: books,
-    details: details.booksDetails, text: "Técnico em programação no IFSP: o primeiro contato com lógica e código." },
+  { year: "2006", short: tr("Técnico em programação", "Programming technician"), col: 0, row: 0, build: books,
+    details: details.booksDetails, text: tr("Técnico em programação no IFSP: o primeiro contato com lógica e código.", "Programming technician course at IFSP: my first contact with logic and code.") },
   {
     year: "2008",
-    short: "Solda e montagem de circuitos",
+    short: tr("Solda e montagem de circuitos", "Soldering and circuit assembly"),
     col: 1,
     row: 0,
     build: solderingBench,
     details: details.solderingDetails,
-    text: "Primeiro emprego, na Luxxel: soldagem e montagem de circuitos eletrônicos e testes de reatores.",
+    text: tr("Primeiro emprego, na Luxxel: soldagem e montagem de circuitos eletrônicos e testes de reatores.", "First job, at Luxxel: soldering and assembling electronic circuits and testing ballasts."),
   },
-  { year: "2010", short: "Recenseador do IBGE", col: 2, row: 0, build: clipboard,
-    details: details.clipboardDetails, text: "Recenseador do IBGE em Itapemirim (ES), de porta em porta. Dados coletados um a um." },
-  { year: "2011", short: "Sites móveis na Mobint", col: 3, row: 0, build: oldPhone,
-    details: details.phoneDetails, text: "Estágio na Mobint: sites móveis com PHP (CodeIgniter) e MySQL." },
+  { year: "2010", short: tr("Recenseador do IBGE", "IBGE census taker"), col: 2, row: 0, build: clipboard,
+    details: details.clipboardDetails, text: tr("Recenseador do IBGE em Itapemirim (ES), de porta em porta. Dados coletados um a um.", "IBGE census taker in Itapemirim (ES), door to door. Data collected one household at a time.") },
+  { year: "2011", short: tr("Sites móveis na Mobint", "Mobile websites at Mobint"), col: 3, row: 0, build: oldPhone,
+    details: details.phoneDetails, text: tr("Estágio na Mobint: sites móveis com PHP (CodeIgniter) e MySQL.", "Internship at Mobint: mobile websites with PHP (CodeIgniter) and MySQL.") },
   // Middle row
   {
     year: "2011",
@@ -650,26 +654,35 @@ const OBJECTS = [
     build: portoCar,
     details: details.carDetails,
     scene: "porto",
-    text: "Analista de sistemas na Porto Seguro (jul 2011 – dez 2018): o pipeline da proposta à apólice, em Java e Informix 4GL. Clique para ver a cena.",
+    text: tr(
+      "Analista de sistemas na Porto Seguro (jul 2011 – dez 2018): o pipeline da proposta à apólice, em Java e Informix 4GL. Clique para ver a cena.",
+      "Systems analyst at Porto Seguro (Jul 2011 – Dec 2018): the pipeline from proposal to policy, in Java and Informix 4GL. Click to see the scene.",
+    ),
   },
   {
     year: "2015",
-    short: "Sistemas de Informação",
+    short: tr("Sistemas de Informação", "Information Systems"),
     col: 1,
     row: 1,
     build: diploma,
     details: details.diplomaDetails,
-    text: "Bacharelado em Sistemas de Informação na Anhanguera, cursado enquanto trabalhava na Porto Seguro.",
+    text: tr(
+      "Bacharelado em Sistemas de Informação na Anhanguera, cursado enquanto trabalhava na Porto Seguro.",
+      "Bachelor's in Information Systems at Anhanguera, taken while working at Porto Seguro.",
+    ),
   },
   {
     year: "2018",
-    short: "Estatística aplicada",
+    short: tr("Estatística aplicada", "Applied statistics"),
     col: 2,
     row: 1,
     tall: true,
     build: statsBoard,
     details: details.boardDetails,
-    text: "Extensão em Estatística Aplicada na FMU. Depois, de 2022 a 2024, Matemática na UNINTER (não concluído).",
+    text: tr(
+      "Extensão em Estatística Aplicada na FMU. Depois, de 2022 a 2024, Matemática na UNINTER (não concluído).",
+      "Extension course in Applied Statistics at FMU. Later, from 2022 to 2024, Mathematics at UNINTER (not completed).",
+    ),
   },
   {
     year: "2018",
@@ -679,7 +692,10 @@ const OBJECTS = [
     build: deliveryTruck,
     details: details.truckDetails,
     scene: "magalu",
-    text: "Desenvolvedor e depois desenvolvedor sênior no Magazine Luiza (dez 2018 – jan 2022): o cálculo de frete em escala. Clique para ver a cena.",
+    text: tr(
+      "Desenvolvedor e depois desenvolvedor sênior no Magazine Luiza (dez 2018 – jan 2022): o cálculo de frete em escala. Clique para ver a cena.",
+      "Developer and then senior developer at Magazine Luiza (Dec 2018 – Jan 2022): shipping cost at scale. Click to see the scene.",
+    ),
   },
   // Back row: column 2 stays empty, behind the statistics board.
   {
@@ -691,27 +707,36 @@ const OBJECTS = [
     build: justiceScale,
     details: details.scaleDetails,
     scene: "kafka",
-    text: "Engenheiro de software sênior no Jusbrasil (desde jan 2022): pipelines com Kafka, proteção de dados, LLMs e Kubernetes. Clique para ver as cenas.",
+    text: tr(
+      "Engenheiro de software sênior no Jusbrasil (desde jan 2022): pipelines com Kafka, proteção de dados, LLMs e Kubernetes. Clique para ver as cenas.",
+      "Senior software engineer at Jusbrasil (since Jan 2022): Kafka pipelines, data protection, LLMs and Kubernetes. Click to see the scenes.",
+    ),
   },
   {
     year: "2026",
-    short: "Radioamador e Telecom",
+    short: tr("Radioamador e Telecom", "Ham radio and telecom"),
     col: 1,
     row: 2,
     tall: true,
     build: radio,
     details: details.radioDetails,
-    text: "Radioamador, com um projeto de simulados para a prova da Anatel. Em 2026, pós em Engenharia de Redes de Telecomunicações (Estácio).",
+    text: tr(
+      "Radioamador, com um projeto de simulados para a prova da Anatel. Em 2026, pós em Engenharia de Redes de Telecomunicações (Estácio).",
+      "Ham radio operator, with a practice-test project for the Anatel licensing exam. In 2026, a postgraduate degree in Telecommunication Networks Engineering (Estácio).",
+    ),
   },
   {
-    year: "hoje",
-    short: "O blog",
+    year: tr("hoje", "today"),
+    short: tr("O blog", "The blog"),
     col: 3,
     row: 2,
     tall: true,
     build: laptop,
     details: details.laptopDetails,
-    text: "blog.lucaspolo.dev: anotações sobre o que estou aprendendo, de Python e Java a cálculo lambda e estatística.",
+    text: tr(
+      "blog.lucaspolo.dev: anotações sobre o que estou aprendendo, de Python e Java a cálculo lambda e estatística.",
+      "blog.lucaspolo.dev: notes on what I am learning, from Python and Java to lambda calculus and statistics (in Portuguese).",
+    ),
   },
 ].map((o) => ({ ...o, x: COLUMNS[o.col], z: ROWS[o.row] }));
 

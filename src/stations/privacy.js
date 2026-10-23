@@ -3,6 +3,7 @@
 // anonymization. Background: the same pipeline at scale (privacy-cascade.js).
 import * as THREE from "three";
 import { COLORS, glow, label, pickable } from "../lib/kit.js";
+import { tr, locale } from "../i18n.js";
 import { createCascade } from "./privacy-cascade.js";
 
 const CW = 1024;
@@ -15,57 +16,93 @@ const LINE_H = 54;
 const MARGIN = 70;
 
 const TYPES = {
-  PESSOA: { name: "PESSOA", color: COLORS.privacy },
-  CPF: { name: "CPF", color: COLORS.message },
-  ENDERECO: { name: "ENDEREÇO", color: COLORS.warn },
-  TELEFONE: { name: "TELEFONE", color: COLORS.kafka },
+  PESSOA: { name: tr("PESSOA", "PERSON"), color: COLORS.privacy },
+  CPF: { name: tr("CPF", "TAX ID"), color: COLORS.message },
+  ENDERECO: { name: tr("ENDEREÇO", "ADDRESS"), color: COLORS.warn },
+  TELEFONE: { name: tr("TELEFONE", "PHONE"), color: COLORS.kafka },
 };
 
 // Every name, number and address below is fictional; the CPFs have invalid check digits on purpose.
 const E = {
-  criatura: { text: "a Criatura", ner: "?", llm: { type: "PESSOA", note: "aqui a expressão identifica o autor da ação" } },
+  criatura: {
+    text: tr("a Criatura", "the Creature"),
+    ner: "?",
+    llm: { type: "PESSOA", note: tr("aqui a expressão identifica o autor da ação", "here the phrase identifies the plaintiff") },
+  },
   cpfAutor: { text: "181.818.181-18", type: "CPF" },
   endereco: {
-    text: "Rua Mary Shelley, 1818, Ingolstadt",
-    ner: "PESSOA?",
-    llm: { type: "ENDERECO", note: "é nome de rua, não de pessoa; continua sendo dado pessoal (endereço)" },
+    text: tr("Rua Mary Shelley, 1818, Ingolstadt", "1818 Mary Shelley St., Ingolstadt"),
+    ner: tr("PESSOA?", "PERSON?"),
+    llm: {
+      type: "ENDERECO",
+      note: tr(
+        "é nome de rua, não de pessoa; continua sendo dado pessoal (endereço)",
+        "it is a street name, not a person; still personal data (an address)",
+      ),
+    },
   },
   victor: { text: "Victor Frankenstein", type: "PESSOA" },
   cpfReu: { text: "123.456.789-00", type: "CPF" },
   telefone: { text: "(00) 91818-1818", type: "TELEFONE" },
   henry: { text: "Henry Clerval", type: "PESSOA" },
   livro: {
-    text: "“Frankenstein, ou o Moderno Prometeu”",
-    ner: "PESSOA?",
-    llm: { keep: true, note: "é título de livro, não dado pessoal; fica no texto" },
+    text: tr("“Frankenstein, ou o Moderno Prometeu”", "“Frankenstein; or, The Modern Prometheus”"),
+    ner: tr("PESSOA?", "PERSON?"),
+    llm: { keep: true, note: tr("é título de livro, não dado pessoal; fica no texto", "it is a book title, not personal data; it stays in the text") },
   },
 };
 const ENTITIES = Object.values(E);
 const AMBIGUOUS = ENTITIES.filter((e) => e.llm);
 
-const LINES = [
-  { style: "title", text: "PODER JUDICIÁRIO" },
-  { style: "subtitle", text: "Vara de Família de Genebra" },
-  { style: "meta", text: "Processo nº 1818.0001-07 · Ação de alimentos" },
-  { style: "badge", text: "SEGREDO DE JUSTIÇA" },
-  { style: "gap" },
-  { parts: ["AUTOR: ", E.criatura, ", sem nome de registro,"] },
-  { parts: ["CPF ", E.cpfAutor, ", residente na"] },
-  { parts: [E.endereco, "."] },
-  { parts: ["RÉU: ", E.victor, ", CPF ", E.cpfReu, ","] },
-  { parts: ["telefone ", E.telefone, "."] },
-  { style: "gap" },
-  { parts: ["O autor alega que o réu o criou em"] },
-  { parts: ["laboratório e o abandonou sem prestar"] },
-  { parts: ["alimentos, conforme o art. 1.694 do"] },
-  { parts: ["Código Civil. Testemunha: ", E.henry, "."] },
-  { parts: ["A obra ", E.livro] },
-  { parts: ["não se confunde com as partes. O autor"] },
-  { parts: ["pede a proteção dos seus dados pessoais."] },
-  { style: "gap" },
-  { style: "meta", text: "Genebra, 31 de outubro de 1818." },
-  { style: "legend" },
-];
+// Line breaks are part of each version: the page has a fixed width, so English wraps differently.
+const LINES = tr(
+  [
+    { style: "title", text: "PODER JUDICIÁRIO" },
+    { style: "subtitle", text: "Vara de Família de Genebra" },
+    { style: "meta", text: "Processo nº 1818.0001-07 · Ação de alimentos" },
+    { style: "badge", text: "SEGREDO DE JUSTIÇA" },
+    { style: "gap" },
+    { parts: ["AUTOR: ", E.criatura, ", sem nome de registro,"] },
+    { parts: ["CPF ", E.cpfAutor, ", residente na"] },
+    { parts: [E.endereco, "."] },
+    { parts: ["RÉU: ", E.victor, ", CPF ", E.cpfReu, ","] },
+    { parts: ["telefone ", E.telefone, "."] },
+    { style: "gap" },
+    { parts: ["O autor alega que o réu o criou em"] },
+    { parts: ["laboratório e o abandonou sem prestar"] },
+    { parts: ["alimentos, conforme o art. 1.694 do"] },
+    { parts: ["Código Civil. Testemunha: ", E.henry, "."] },
+    { parts: ["A obra ", E.livro] },
+    { parts: ["não se confunde com as partes. O autor"] },
+    { parts: ["pede a proteção dos seus dados pessoais."] },
+    { style: "gap" },
+    { style: "meta", text: "Genebra, 31 de outubro de 1818." },
+    { style: "legend" },
+  ],
+  [
+    { style: "title", text: "JUDICIAL BRANCH" },
+    { style: "subtitle", text: "Family Court of Geneva" },
+    { style: "meta", text: "Case no. 1818.0001-07 · Child support claim" },
+    { style: "badge", text: "UNDER SEAL" },
+    { style: "gap" },
+    { parts: ["PLAINTIFF: ", E.criatura, ", with no registered"] },
+    { parts: ["name, tax ID ", E.cpfAutor, ", residing at"] },
+    { parts: [E.endereco, "."] },
+    { parts: ["DEFENDANT: ", E.victor, ","] },
+    { parts: ["tax ID ", E.cpfReu, ", phone ", E.telefone, "."] },
+    { style: "gap" },
+    { parts: ["The plaintiff claims the defendant created"] },
+    { parts: ["it in a laboratory and abandoned it without"] },
+    { parts: ["support, under art. 1,694 of the Civil"] },
+    { parts: ["Code. Witness: ", E.henry, "."] },
+    { parts: ["The work ", E.livro] },
+    { parts: ["is not to be confused with the parties. The"] },
+    { parts: ["plaintiff asks that its personal data be protected."] },
+    { style: "gap" },
+    { style: "meta", text: "Geneva, October 31, 1818." },
+    { style: "legend" },
+  ],
+);
 
 const finalType = (e) => (e.llm ? (e.llm.keep ? null : e.llm.type) : e.type);
 
@@ -96,7 +133,7 @@ function drawPage(ctx, mode) {
     if (line.style === "legend") {
       // Color key for the NER highlights, at the foot of the page.
       ctx.font = font(600, 23);
-      const items = [...Object.values(TYPES), { name: "AMBÍGUO → LLM", color: COLORS.llm }];
+      const items = [...Object.values(TYPES), { name: tr("AMBÍGUO → LLM", "AMBIGUOUS → LLM"), color: COLORS.llm }];
       let lx = MARGIN;
       const ly = CH - 80;
       items.forEach((it) => {
@@ -249,7 +286,7 @@ export function createPrivacy() {
   document.fonts?.load(`${BODY_FONT}px Inter`).then(() => render(drawnMode));
 
   // Step indicator above the page and a caption below it: the page names each phase as it happens.
-  const STEP_NAMES = ["Classificação", "NER", "LLM", "Anonimização"];
+  const STEP_NAMES = tr(["Classificação", "NER", "LLM", "Anonimização"], ["Classification", "NER", "LLM", "Anonymization"]);
   const stepper = label("", "steps");
   stepper.position.set(0, PAGE_H / 2 + 0.95, 0.05);
   page.add(stepper);
@@ -348,7 +385,7 @@ export function createPrivacy() {
       text = e.ner;
     } else if (s === "resolved" && e.llm) {
       color = e.llm.keep ? COLORS.ok : TYPES[e.llm.type].color;
-      text = e.llm.keep ? "LLM: mantém" : `LLM: ${TYPES[e.llm.type].name}`;
+      text = e.llm.keep ? tr("LLM: mantém", "LLM: keep") : `LLM: ${TYPES[e.llm.type].name}`;
     } else {
       color = TYPES[e.type].color;
       text = TYPES[e.type].name;
@@ -373,34 +410,49 @@ export function createPrivacy() {
       if (s === "idle") break;
       if (e.llm && s === "resolved") {
         return {
-          title: e.llm.keep ? "LLM: mantém no texto" : `LLM: ${TYPES[e.llm.type].name}`,
+          title: e.llm.keep ? tr("LLM: mantém no texto", "LLM: stays in the text") : `LLM: ${TYPES[e.llm.type].name}`,
           text: `“${e.text.replace(/[“”]/g, "")}” ${e.llm.note}.`,
         };
       }
-      if (e.llm) return { title: "Ambíguo: vai para o LLM", text: `O NER não tem certeza sobre “${e.text.replace(/[“”]/g, "")}”.` };
-      return { title: `${TYPES[e.type].name} · NER`, text: `“${e.text}” foi encontrado pelo NER e será anonimizado.` };
+      if (e.llm) {
+        const passage = e.text.replace(/[“”]/g, "");
+        return {
+          title: tr("Ambíguo: vai para o LLM", "Ambiguous: goes to the LLM"),
+          text: tr(`O NER não tem certeza sobre “${passage}”.`, `NER is not sure about “${passage}”.`),
+        };
+      }
+      return {
+        title: `${TYPES[e.type].name} · NER`,
+        text: tr(`“${e.text}” foi encontrado pelo NER e será anonimizado.`, `NER found “${e.text}”; it will be anonymized.`),
+      };
     }
     return {
-      title: "Petição fictícia",
-      text: "A Criatura processa o Dr. Victor Frankenstein por pensão alimentícia e pede a proteção dos seus dados. Nomes e números são inventados.",
+      title: tr("Petição fictícia", "Fictional filing"),
+      text: tr(
+        "A Criatura processa o Dr. Victor Frankenstein por pensão alimentícia e pede a proteção dos seus dados. Nomes e números são inventados.",
+        "The Creature sues Dr. Victor Frankenstein for child support and asks for its data to be protected. Names and numbers are made up.",
+      ),
     };
   });
   pickable(pickables, orb, {
     title: "LLM",
-    text: "Olha o contexto dos trechos ambíguos que o NER marcou e decide se são dados pessoais.",
+    text: tr(
+      "Olha o contexto dos trechos ambíguos que o NER marcou e decide se são dados pessoais.",
+      "Looks at the context of the ambiguous passages NER flagged and decides whether they are personal data.",
+    ),
   });
 
   // Timeline of one page
   // Each phase ends with a short pause (BEAT) so the change can be read before the next one starts.
   const BEAT = 0.8;
   const PHASES = [
-    { name: "enter", dur: 1.2, step: -1, caption: "Chega um documento novo ao pipeline." },
-    { name: "classify", dur: 2.4 + BEAT, step: 0, caption: "1 · Classificação: este documento tem dados pessoais? Tem, então segue para o NER." },
-    { name: "ner", dur: 5 + BEAT, step: 1, caption: "2 · NER: lê o texto e marca nomes, CPFs, endereços e telefones. O que é ambíguo fica em lilás." },
-    { name: "llm", dur: 2.4 * AMBIGUOUS.length + BEAT, step: 2, caption: "3 · LLM: olha o contexto dos trechos ambíguos." },
-    { name: "anonymize", dur: 2.4 + BEAT, step: 3, caption: "4 · Anonimização: os dados pessoais viram marcadores; o resto do texto fica." },
-    { name: "hold", dur: 4, step: 4, caption: "Pronto: a decisão continua pública, os dados pessoais não." },
-    { name: "exit", dur: 1.2, step: 4, caption: "O documento segue para a plataforma, junto com milhões de outros." },
+    { name: "enter", dur: 1.2, step: -1, caption: tr("Chega um documento novo ao pipeline.", "A new document arrives in the pipeline.") },
+    { name: "classify", dur: 2.4 + BEAT, step: 0, caption: tr("1 · Classificação: este documento tem dados pessoais? Tem, então segue para o NER.", "1 · Classification: does this document have personal data? It does, so it goes on to NER.") },
+    { name: "ner", dur: 5 + BEAT, step: 1, caption: tr("2 · NER: lê o texto e marca nomes, CPFs, endereços e telefones. O que é ambíguo fica em lilás.", "2 · NER: reads the text and marks names, ID numbers, addresses and phones. Ambiguous passages turn lilac.") },
+    { name: "llm", dur: 2.4 * AMBIGUOUS.length + BEAT, step: 2, caption: tr("3 · LLM: olha o contexto dos trechos ambíguos.", "3 · LLM: looks at the context of the ambiguous passages.") },
+    { name: "anonymize", dur: 2.4 + BEAT, step: 3, caption: tr("4 · Anonimização: os dados pessoais viram marcadores; o resto do texto fica.", "4 · Anonymization: personal data becomes placeholders; the rest of the text stays.") },
+    { name: "hold", dur: 4, step: 4, caption: tr("Pronto: a decisão continua pública, os dados pessoais não.", "Done: the ruling stays public, the personal data does not.") },
+    { name: "exit", dur: 1.2, step: 4, caption: tr("O documento segue para a plataforma, junto com milhões de outros.", "The document moves on to the platform, along with millions of others.") },
   ];
   let phase = 0;
   let phaseT = 0;
@@ -443,7 +495,7 @@ export function createPrivacy() {
     if (mode === "original") {
       render("original");
       setStamp("original", COLORS.danger);
-      setCaption("O original, com tudo o que foi marcado: é isto que a anonimização protege.");
+      setCaption(tr("O original, com tudo o que foi marcado: é isto que a anonimização protege.", "The original, with everything that was flagged: this is what anonymization protects."));
     } else {
       render("anon");
       ENTITIES.forEach((e) => {
@@ -452,7 +504,7 @@ export function createPrivacy() {
         o.tint.material.opacity = 0;
         o.bar.visible = false;
       });
-      setStamp("anonimizado ✓", COLORS.ok);
+      setStamp(tr("anonimizado ✓", "anonymized ✓"), COLORS.ok);
       setCaption(PHASES.find((p) => p.name === "hold").caption);
     }
   }
@@ -472,8 +524,8 @@ export function createPrivacy() {
     } else if (p.name === "classify") {
       // The whole page is examined at once: its frame pulses, then the verdict is stamped.
       frame.material.opacity = a < 1 ? 0.5 + 0.5 * Math.sin(phaseT * 9) : 0.25;
-      if (a < 0.55) setStamp("classificando…", COLORS.message);
-      else setStamp("contém dados pessoais", COLORS.message);
+      if (a < 0.55) setStamp(tr("classificando…", "classifying…"), COLORS.message);
+      else setStamp(tr("contém dados pessoais", "contains personal data"), COLORS.message);
     } else if (p.name === "ner") {
       frame.material.opacity = 0;
       scanner.visible = a < 1;
@@ -486,9 +538,13 @@ export function createPrivacy() {
       const slot = Math.min(AMBIGUOUS.length - 1, Math.floor(a * AMBIGUOUS.length));
       const local = a >= 1 ? 1 : a * AMBIGUOUS.length - slot;
       const e = AMBIGUOUS[slot];
-      const verdict = e.llm.keep ? "mantém" : TYPES[e.llm.type].name;
+      const verdict = e.llm.keep ? tr("mantém", "keep") : TYPES[e.llm.type].name;
       const passage = e.text.replace(/[“”]/g, "");
-      setCaption(local < 0.5 ? `3 · LLM: e “${passage}”? Olhando o contexto…` : `3 · LLM: “${passage}” → ${verdict}: ${e.llm.note}.`);
+      setCaption(
+        local < 0.5
+          ? tr(`3 · LLM: e “${passage}”? Olhando o contexto…`, `3 · LLM: what about “${passage}”? Checking the context…`)
+          : `3 · LLM: “${passage}” → ${verdict}: ${e.llm.note}.`,
+      );
       const r = rects.get(e);
       target.set(toLocalX(r.x + r.w / 2), toLocalY(r.y + r.h / 2), 0.1);
       // First half: a probe travels from the LLM to the passage; then the verdict lands.

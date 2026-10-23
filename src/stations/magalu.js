@@ -2,6 +2,7 @@
 // confirmed orders become packages that trucks carry out of the distribution center.
 import * as THREE from "three";
 import { COLORS, glow, label, outlinedBox, tube, path, pickable, Flow } from "../lib/kit.js";
+import { tr } from "../i18n.js";
 import { createLogistics } from "./magalu-logistics.js";
 
 const CITIES = 46;
@@ -10,9 +11,15 @@ const PEAK_FACTOR = 6;
 const ORDER_RATE = 0.3; // share of quotes that turn into an order
 
 const PARTNERS = [
-  { name: "Correios", pos: [-12, 1.2, -6], text: "Cotação e postagem. A integração tem retentativa e fallback quando o parceiro oscila." },
-  { name: "Bling", pos: [6, 1.2, -13], text: "ERP dos sellers do marketplace, integrado de forma resiliente." },
-  { name: "AnyMarket", pos: [14, 1.2, -3], text: "Hub de marketplaces conectado ao fluxo de pedidos e fretes." },
+  { name: "Correios", pos: [-12, 1.2, -6], text: tr(
+      "Cotação e postagem. A integração tem retentativa e fallback quando o parceiro oscila.",
+      "Quotes and shipping. The integration retries and falls back when the partner is unstable.",
+    ),
+  },
+  { name: "Bling", pos: [6, 1.2, -13], text: tr("ERP dos sellers do marketplace, integrado de forma resiliente.", "ERP used by marketplace sellers, integrated resiliently."),
+  },
+  { name: "AnyMarket", pos: [14, 1.2, -3], text: tr("Hub de marketplaces conectado ao fluxo de pedidos e fretes.", "Marketplace hub connected to the order and shipping flow."),
+  },
 ];
 
 export function createMagalu() {
@@ -64,8 +71,8 @@ export function createMagalu() {
   });
   group.add(cityDots);
   pickable(pickables, cityDots, {
-    title: "Clientes e sellers",
-    text: "Cada carrinho pede uma cotação de frete antes de fechar a compra.",
+    title: tr("Clientes e sellers", "Customers and sellers"),
+    text: tr("Cada carrinho pede uma cotação de frete antes de fechar a compra.", "Every cart asks for a shipping quote before checkout."),
   });
 
   // Shipping calculator tower
@@ -84,15 +91,18 @@ export function createMagalu() {
     tower.add(r);
     return r;
   });
-  const towerLabel = label("Cálculo de frete");
+  const towerLabel = label(tr("Cálculo de frete", "Shipping cost"));
   towerLabel.position.set(0, 6.3, 0);
   tower.add(towerLabel);
-  const hud = label("tráfego normal", "small");
+  const hud = label(tr("tráfego normal", "normal traffic"), "small");
   hud.position.set(0, 7.7, 0);
   tower.add(hud);
   pickable(pickables, towerBody, {
-    title: "Cálculo de frete",
-    text: "Serviço que cota o frete da Magalu e dos parceiros do marketplace, com milhões de requisições por dia.",
+    title: tr("Cálculo de frete", "Shipping cost"),
+    text: tr(
+      "Serviço que cota o frete da Magalu e dos parceiros do marketplace, com milhões de requisições por dia.",
+      "Service that quotes shipping for Magalu and its marketplace partners, with millions of requests a day.",
+    ),
   });
   const TOWER_IN = new THREE.Vector3(0, 3.2, 0);
 
@@ -171,7 +181,9 @@ export function createMagalu() {
     actions: {
       blackfriday() {
         peak = !peak;
-        hud.element.textContent = peak ? `Black Friday · tráfego ${PEAK_FACTOR}×` : "tráfego normal";
+        hud.element.textContent = peak
+          ? tr(`Black Friday · tráfego ${PEAK_FACTOR}×`, `Black Friday · ${PEAK_FACTOR}× traffic`)
+          : tr("tráfego normal", "normal traffic");
         hud.element.classList.toggle("alert", peak);
         return peak;
       },

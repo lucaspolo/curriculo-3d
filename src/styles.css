@@ -765,3 +765,36 @@ body.pointer {
     transform: translateY(-4px) rotate(-135deg);
   }
 }
+
+/* Language switch, top right */
+.lang {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 5;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: rgba(6, 10, 19, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.lang a {
+  font: 600 12px var(--font-mono);
+  color: var(--muted);
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+
+.lang a[aria-current="true"] {
+  color: var(--bg);
+  background: var(--kafka);
+}
+
+.lang a:not([aria-current="true"]):hover {
+  color: var(--text);
+}

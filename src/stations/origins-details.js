@@ -2,6 +2,7 @@
 // (in that object's local space) and may return { play(k, dt, time), idle() } for its own animation.
 import * as THREE from "three";
 import { COLORS, glow, roundedBox } from "../lib/kit.js";
+import { tr } from "../i18n.js";
 
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.1, ...extra });
 const rbox = (w, h, d, material, r = Math.min(w, h, d) * 0.22) => new THREE.Mesh(roundedBox(w, h, d, r, 2), material);
@@ -41,7 +42,7 @@ const flat = (mesh, y) => {
 // ---------------------------------------------------------------------------------------------------
 
 export function booksDetails(root) {
-  const titles = ["LÓGICA DE PROGRAMAÇÃO", "ALGORITMOS", "ESTRUTURAS DE DADOS"];
+  const titles = tr(["LÓGICA DE PROGRAMAÇÃO", "ALGORITMOS", "ESTRUTURAS DE DADOS"], ["PROGRAMMING LOGIC", "ALGORITHMS", "DATA STRUCTURES"]);
   const inks = ["#e9d9a6", "#f3e3c3", "#e6e0ff"];
   root.children.slice(0, 3).forEach((book, i) => {
     // Spine facing the camera, with a title and two gilt bands.
@@ -212,10 +213,10 @@ export function clipboardDetails(root) {
     ctx.fillRect(0, 0, w, 44);
     ctx.fillStyle = "#ffffff";
     ctx.font = font(700, 22);
-    ctx.fillText("Censo 2010", 14, 30);
+    ctx.fillText(tr("Censo 2010", "Census 2010"), 14, 30);
     ctx.fillStyle = "#1a2236";
     ctx.font = font(400, 18);
-    ctx.fillText(`Domicílio ${house}`, 14, 78);
+    ctx.fillText(`${tr("Domicílio", "Household")} ${house}`, 14, 78);
     for (let i = 0; i < 6; i++) {
       ctx.fillStyle = i < done ? "#1f8f4f" : "#9fb0c8";
       ctx.fillRect(14, 100 + i * 26, 18, 18);
@@ -494,10 +495,10 @@ export function radioDetails(root) {
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = "#1a2236";
     ctx.font = font(700, 26);
-    ctx.fillText("Simulado", 22, 44);
+    ctx.fillText(tr("Simulado", "Practice test"), 22, 44);
     ctx.font = font(400, 18);
     ctx.fillStyle = "#4a5570";
-    ctx.fillText("Radioamador · Anatel", 22, 72);
+    ctx.fillText(tr("Radioamador · Anatel", "Ham radio · Anatel"), 22, 72);
     for (let q = 0; q < 8; q++) {
       const y = 112 + q * 34;
       ctx.fillStyle = "#4a5570";

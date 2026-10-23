@@ -2,6 +2,7 @@
 // so normalization, classification and Trust & Privacy are linked only through Kafka.
 import * as THREE from "three";
 import { COLORS, glow, label, outlinedBox, roundedBox, tube, path, pickable, Flow } from "../lib/kit.js";
+import { tr, locale } from "../i18n.js";
 
 const ROW_A = 5;
 const ROW_B = -5;
@@ -14,56 +15,68 @@ const PROCESSING = 0.25; // seconds a stage holds a message before publishing do
 // Topic names are illustrative; the profile describes the stages, not the topic layout.
 // dir is the direction messages travel through the log: the bottom row flows right to left.
 const TOPICS = [
-  { name: "processos.brutos", x: -8, y: ROW_A, dir: 1, color: COLORS.message },
-  { name: "processos.normalizados", x: 8, y: ROW_A, dir: 1, color: COLORS.kafka },
-  { name: "processos.classificados", x: 8, y: ROW_B, dir: -1, color: COLORS.warn },
-  { name: "processos.publicados", x: -8, y: ROW_B, dir: -1, color: COLORS.ok },
+  { name: tr("processos.brutos", "cases.raw"), x: -8, y: ROW_A, dir: 1, color: COLORS.message },
+  { name: tr("processos.normalizados", "cases.normalized"), x: 8, y: ROW_A, dir: 1, color: COLORS.kafka },
+  { name: tr("processos.classificados", "cases.classified"), x: 8, y: ROW_B, dir: -1, color: COLORS.warn },
+  { name: tr("processos.publicados", "cases.published"), x: -8, y: ROW_B, dir: -1, color: COLORS.ok },
 ];
 
 const STAGES = [
   {
-    name: "Normalização",
+    name: tr("Normalização", "Normalization"),
     x: 0,
     y: ROW_A,
     color: COLORS.kafka,
-    text: "Consome processos.brutos, padroniza os dados vindos de fontes diferentes e publica em processos.normalizados.",
+    text: tr(
+      "Consome processos.brutos, padroniza os dados vindos de fontes diferentes e publica em processos.normalizados.",
+      "Consumes cases.raw, standardizes data coming from different sources and publishes to cases.normalized.",
+    ),
   },
   {
-    name: "Classificação",
+    name: tr("Classificação", "Classification"),
     x: 15.5,
     y: 0,
     color: COLORS.warn,
-    text: "Consome processos.normalizados, classifica processos e documentos e publica em processos.classificados.",
+    text: tr(
+      "Consome processos.normalizados, classifica processos e documentos e publica em processos.classificados.",
+      "Consumes cases.normalized, classifies proceedings and documents and publishes to cases.classified.",
+    ),
   },
   {
     name: "Trust & Privacy",
     x: 0,
     y: ROW_B,
     color: COLORS.privacy,
-    text: "Consome processos.classificados, encontra e protege dados pessoais com classificação, NER e LLMs, e publica em processos.publicados.",
+    text: tr(
+      "Consome processos.classificados, encontra e protege dados pessoais com classificação, NER e LLMs, e publica em processos.publicados.",
+      "Consumes cases.classified, finds and protects personal data with classification, NER and LLMs, and publishes to cases.published.",
+    ),
   },
 ];
 
 const SINK = {
-  name: "Plataforma",
+  name: tr("Plataforma", "Platform"),
   x: -16.5,
   y: ROW_B,
   color: COLORS.k8s,
-  text: "Os dados tratados chegam à plataforma que serve a informação jurídica pública aos usuários.",
+  text: tr(
+    "Os dados tratados chegam à plataforma que serve a informação jurídica pública aos usuários.",
+    "The processed data reaches the platform that serves public legal information to users.",
+  ),
 };
 
 const PRODUCERS = [
-  { name: "Tribunais", y: ROW_A + 2 },
-  { name: "Diários oficiais", y: ROW_A },
-  { name: "Documentos", y: ROW_A - 2 },
+  { name: tr("Tribunais", "Courts"), y: ROW_A + 2 },
+  { name: tr("Diários oficiais", "Official gazettes"), y: ROW_A },
+  { name: tr("Documentos", "Documents"), y: ROW_A - 2 },
 ].map((p) => ({ ...p, x: -16.5 }));
 
 const DAG = [
-  { name: "extrair", pos: [-7, 11], deps: [], step: 0 },
-  { name: "normalizar", pos: [-2.5, 12.7], deps: [0], step: 1 },
-  { name: "classificar", pos: [-2.5, 9.3], deps: [0], step: 1 },
-  { name: "carregar", pos: [2, 11], deps: [1, 2], step: 2 },
-  { name: "publicar", pos: [6.5, 11], deps: [3], step: 3 },
+  { name: tr("extrair", "extract"), pos: [-7, 11], deps: [], step: 0 },
+  { name: tr("normalizar", "normalize"), pos: [-2.5, 12.7], deps: [0], step: 1 },
+  { name: tr("classificar", "classify"), pos: [-2.5, 9.3], deps: [0], step: 1 },
+  { name: tr("carregar", "load"), pos: [2, 11], deps: [1, 2], step: 2 },
+  { name: tr("publicar", "publish"), pos: [6.5, 11], deps: [3], step: 3 },
 ];
 
 const partitionY = (topic, p) => topic.y + (1 - p) * 1.1;
@@ -122,8 +135,11 @@ export function createKafka() {
     }
     group.add(logs);
     pickable(pickables, logs, {
-      title: `Tópico ${t.name}`,
-      text: "Três partições, cada uma um log ordenado. Cada etapa lê de um tópico e escreve no próximo, então uma etapa lenta não trava as outras.",
+      title: tr(`Tópico ${t.name}`, `Topic ${t.name}`),
+      text: tr(
+        "Três partições, cada uma um log ordenado. Cada etapa lê de um tópico e escreve no próximo, então uma etapa lenta não trava as outras.",
+        "Three partitions, each an ordered log. Each stage reads from one topic and writes to the next, so a slow stage does not hold the others back.",
+      ),
     });
     return {
       ...t,
@@ -146,7 +162,10 @@ export function createKafka() {
     pickable(
       pickables,
       mesh,
-      { title: `Produtor: ${p.name}`, text: "Clique para publicar uma rajada de mensagens em processos.brutos." },
+      {
+        title: tr(`Produtor: ${p.name}`, `Producer: ${p.name}`),
+        text: tr("Clique para publicar uma rajada de mensagens em processos.brutos.", "Click to publish a burst of messages to cases.raw."),
+      },
       () => burst(i, 14),
     );
     return { ...p, hw: 1.6, hh: 0.6, mesh, pulse: 0 };
@@ -162,8 +181,8 @@ export function createKafka() {
     pickable(pickables, mesh, { title: `${title}: ${s.name}`, text: s.text });
     return { ...s, hw: 1.8, hh: 0.8, mesh, label: l, count: 0, pulse: 0, dirty: false };
   };
-  const stages = STAGES.map((s) => makeService(s, "Etapa"));
-  const sink = makeService(SINK, "Destino");
+  const stages = STAGES.map((s) => makeService(s, tr("Etapa", "Stage")));
+  const sink = makeService(SINK, tr("Destino", "Destination"));
   const consumers = [...stages, sink]; // consumers[t] reads topic t
 
   // Tubes
@@ -254,12 +273,15 @@ export function createKafka() {
   const dagGeo = new THREE.BufferGeometry();
   dagGeo.setAttribute("position", new THREE.Float32BufferAttribute(dagLines, 3));
   group.add(new THREE.LineSegments(dagGeo, new THREE.LineBasicMaterial({ color: 0x5c6f91 })));
-  const dagLabel = label("Airflow · DAG diário");
+  const dagLabel = label(tr("Airflow · DAG diário", "Airflow · daily DAG"));
   dagLabel.position.set(-0.3, 14.4, 0);
   group.add(dagLabel);
   pickable(pickables, dagNodes[0], {
     title: "Airflow",
-    text: "Orquestra as etapas em lote: cada tarefa roda quando as dependências terminam.",
+    text: tr(
+      "Orquestra as etapas em lote: cada tarefa roda quando as dependências terminam.",
+      "Orchestrates the batch steps: each task runs once its dependencies finish.",
+    ),
   });
   const dagColors = { idle: new THREE.Color(COLORS.dim), running: glow(COLORS.warn, 1.2), done: glow(COLORS.ok, 1.5) };
   let dagClock = 0;
@@ -313,7 +335,7 @@ export function createKafka() {
         c.mesh.scale.setScalar(1 + c.pulse * 0.12);
         c.mesh.material.emissiveIntensity = 0.08 + c.pulse * 0.5;
         if (c.dirty) {
-          c.label.element.textContent = `${c.name} · ${c.count.toLocaleString("pt-BR")}`;
+          c.label.element.textContent = `${c.name} · ${c.count.toLocaleString(locale)}`;
           c.dirty = false;
         }
       });

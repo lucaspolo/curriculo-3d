@@ -2,6 +2,7 @@
 // needs it goes on to NER and, for the ambiguous few, to the LLM. The lane split is illustrative.
 import * as THREE from "three";
 import { COLORS, glow, label, pickable } from "../lib/kit.js";
+import { tr, locale } from "../i18n.js";
 
 const Z = -9;
 const INPUT = new THREE.Vector3(3.5, 4.2, Z);
@@ -10,19 +11,22 @@ const RATE = 16; // documents per second at full focus
 const MAX = 260;
 
 const LANES = [
-  { key: "clean", name: "sem dados pessoais", share: 0.6, color: 0x7d8fb0, y: 7.2 },
-  { key: "ner", name: "anonimizados pelo NER", share: 0.34, color: COLORS.privacy, y: 3.6 },
-  { key: "llm", name: "decididos pelo LLM", share: 0.06, color: COLORS.llm, y: 0.4 },
+  { key: "clean", name: tr("sem dados pessoais", "no personal data"), share: 0.6, color: 0x7d8fb0, y: 7.2 },
+  { key: "ner", name: tr("anonimizados pelo NER", "anonymized by NER"), share: 0.34, color: COLORS.privacy, y: 3.6 },
+  { key: "llm", name: tr("decididos pelo LLM", "decided by the LLM"), share: 0.06, color: COLORS.llm, y: 0.4 },
 ];
 
 const GATES = [
   {
-    name: "Classificação",
+    name: tr("Classificação", "Classification"),
     x: 6,
     y: 4.2,
     h: 3.4,
     color: COLORS.message,
-    text: "Separa o que não tem dado pessoal, que segue direto, do que precisa de tratamento.",
+    text: tr(
+      "Separa o que não tem dado pessoal, que segue direto, do que precisa de tratamento.",
+      "Separates what has no personal data, which goes straight through, from what needs treatment.",
+    ),
   },
   {
     name: "NER",
@@ -30,7 +34,10 @@ const GATES = [
     y: 3.6,
     h: 2.6,
     color: COLORS.privacy,
-    text: "Encontra e anonimiza as entidades claras: nomes, CPFs, endereços e telefones.",
+    text: tr(
+      "Encontra e anonimiza as entidades claras: nomes, CPFs, endereços e telefones.",
+      "Finds and anonymizes the clear-cut entities: names, ID numbers, addresses and phones.",
+    ),
   },
   {
     name: "LLM",
@@ -38,7 +45,10 @@ const GATES = [
     y: 0.4,
     h: 2,
     color: COLORS.llm,
-    text: "Só os casos ambíguos chegam aqui. É a etapa mais cara, por isso recebe a menor fatia.",
+    text: tr(
+      "Só os casos ambíguos chegam aqui. É a etapa mais cara, por isso recebe a menor fatia.",
+      "Only the ambiguous cases get here. It is the most expensive step, so it gets the smallest share.",
+    ),
   },
 ];
 
@@ -84,7 +94,7 @@ export function createCascade(group, pickables) {
   });
   let litGate = -1;
 
-  const scale = label("escala: dezenas de milhões de documentos por dia", "small");
+  const scale = label(tr("escala: dezenas de milhões de documentos por dia", "scale: tens of millions of documents a day"), "small");
   scale.position.set(10, 10, Z);
   group.add(scale);
 

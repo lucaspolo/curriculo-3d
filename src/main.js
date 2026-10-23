@@ -7,6 +7,7 @@ import "@fontsource/jetbrains-mono/latin-400.css";
 import "@fontsource/jetbrains-mono/latin-600.css";
 import "./styles.css";
 import { stationProgress } from "./lib/progress.js";
+import { applyPageLanguage, switchLanguage } from "./i18n.js";
 import { stepByWheel } from "./wheel-step.js";
 
 function webglAvailable() {
@@ -17,6 +18,9 @@ function webglAvailable() {
     return false;
   }
 }
+
+// Language first: the English text changes line breaks, so it must be in place before anything is measured.
+applyPageLanguage();
 
 const sections = [...document.querySelectorAll("[data-station]")];
 const dots = [...document.querySelectorAll("[data-dot]")];
@@ -45,6 +49,15 @@ const onScroll = () => {
 measure();
 onScroll();
 window.addEventListener("scroll", onScroll, { passive: true });
+
+// The PT | EN switch reloads in the other language, back on the section being read.
+document.querySelectorAll("[data-lang]").forEach((a) =>
+  a.addEventListener("click", (e) => {
+    e.preventDefault();
+    const current = dots.findIndex((d) => d.classList.contains("active"));
+    switchLanguage(a.dataset.lang, sections[Math.max(0, current)]?.id);
+  }),
+);
 stepByWheel(sections, { isNarrow: narrow });
 window.addEventListener("resize", () => {
   measure();

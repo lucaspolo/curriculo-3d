@@ -2,6 +2,7 @@
 // The card has tabs; the camera slides between the panels and cycles on its own when left alone.
 import * as THREE from "three";
 import { COLORS, glow, label, pickable, Flow, damp, outlinedBox } from "../lib/kit.js";
+import { tr, locale } from "../i18n.js";
 import { CW, CH, VIGNETTES, TOOLS } from "./llm-vignettes.js";
 
 const PANEL_W = 9;
@@ -16,16 +17,25 @@ const REDRAW_FPS = 20;
 
 const INFO = [
   {
-    title: "LLM no pipeline de ingestão",
-    text: "Uma etapa do pipeline lê a decisão e devolve dados estruturados, validados por schema antes de seguir para o próximo tópico.",
+    title: tr("LLM no pipeline de ingestão", "LLM in the ingestion pipeline"),
+    text: tr(
+      "Uma etapa do pipeline lê a decisão e devolve dados estruturados, validados por schema antes de seguir para o próximo tópico.",
+      "A pipeline step reads the ruling and returns structured data, validated against a schema before moving on to the next topic.",
+    ),
   },
   {
-    title: "Agente no produto",
-    text: "O agente chama ferramentas (busca, consulta, cálculo) e responde citando a fonte.",
+    title: tr("Agente no produto", "Agent in the product"),
+    text: tr(
+      "O agente chama ferramentas (busca, consulta, cálculo) e responde citando a fonte.",
+      "The agent calls tools (search, lookup, calculation) and answers citing its source.",
+    ),
   },
   {
-    title: "Agente de código",
-    text: "Da issue ao pull request: reproduz o erro, corrige, roda os testes e abre o PR. Uma pessoa revisa e aprova.",
+    title: tr("Agente de código", "Coding agent"),
+    text: tr(
+      "Da issue ao pull request: reproduz o erro, corrige, roda os testes e abre o PR. Uma pessoa revisa e aprova.",
+      "From issue to pull request: reproduces the bug, fixes it, runs the tests and opens the PR. A person reviews and approves.",
+    ),
   },
 ];
 
@@ -93,7 +103,13 @@ export function createLlm() {
   const coreLabel = label("LLM");
   coreLabel.position.set(0, 1.8, 0);
   core.add(coreLabel);
-  pickable(pickables, core, { title: "LLM", text: "O mesmo tipo de modelo servindo pipeline, produto e desenvolvimento." });
+  pickable(pickables, core, {
+    title: "LLM",
+    text: tr(
+      "O mesmo tipo de modelo servindo pipeline, produto e desenvolvimento.",
+      "The same kind of model serving the pipeline, the product and development.",
+    ),
+  });
 
   const beams = PANEL_X.map((x, i) => {
     const curve = new THREE.CatmullRomCurve3([
@@ -120,7 +136,7 @@ export function createLlm() {
     const l = label(name, "small");
     l.position.set(0, -0.75, 0);
     mesh.add(l);
-    pickable(pickables, mesh, { title: `ferramenta: ${name}`, text: `Chamada pelo agente: ${tool.call}` });
+    pickable(pickables, mesh, { title: tr(`ferramenta: ${name}`, `tool: ${name}`), text: tr(`Chamada pelo agente: ${tool.call}`, `Called by the agent: ${tool.call}`) });
     const from = new THREE.Vector3(PANEL_X[1] + x * 0.6, PANEL_Y - PANEL_H / 2, 0.1);
     const to = mesh.position.clone().add(new THREE.Vector3(0, 0.35, 0));
     return { mesh, glow: 0, down: new THREE.LineCurve3(from, to), up: new THREE.LineCurve3(to, from) };
