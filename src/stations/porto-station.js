@@ -2,7 +2,7 @@
 // whose inner light rings run from entry to exit while a proposal is processed, and a tilted panel with the
 // stage's icon, name and progress bar.
 import * as THREE from "three";
-import { glow, roundedBox, outline } from "../lib/kit.js";
+import { glow, roundedBox, outline, canvasTexture } from "../lib/kit.js";
 
 const HOOD_R = 1.45;
 const HOOD_LEN = 2.3;
@@ -75,9 +75,7 @@ function panelTexture(name, color, icon) {
   canvas.width = 512;
   canvas.height = 170;
   const ctx = canvas.getContext("2d");
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
+  const texture = canvasTexture(canvas);
   const css = `#${new THREE.Color(color).getHexString()}`;
   const draw = () => {
     ctx.fillStyle = "#0c1322";

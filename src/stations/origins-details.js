@@ -1,7 +1,7 @@
 // Extra details for the objects on the origins workbench. Each function decorates an object's root group
 // (in that object's local space) and may return { play(k, dt, time), idle() } for its own animation.
 import * as THREE from "three";
-import { COLORS, glow, roundedBox } from "../lib/kit.js";
+import { COLORS, glow, roundedBox, canvasTexture } from "../lib/kit.js";
 import { tr } from "../i18n.js";
 
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.1, ...extra });
@@ -16,9 +16,7 @@ function painted(pxW, pxH, w, h, draw, { basic = true } = {}) {
   canvas.width = pxW;
   canvas.height = pxH;
   const ctx = canvas.getContext("2d");
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
+  const texture = canvasTexture(canvas);
   const material = basic
     ? new THREE.MeshBasicMaterial({ map: texture, toneMapped: false })
     : new THREE.MeshStandardMaterial({ map: texture, roughness: 0.7 });
@@ -604,9 +602,7 @@ export function decorateDesk(top, group, deskW, deskD) {
     for (let x = 0; x <= 1024; x += 64) ctx.lineTo(x, y + Math.sin(x / 140 + i) * 6 + (rnd() - 0.5) * 4);
     ctx.stroke();
   }
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 8;
+  const texture = canvasTexture(canvas, { anisotropy: 8 });
   top.material.map = texture;
   top.material.color.set(0xffffff);
   top.material.needsUpdate = true;

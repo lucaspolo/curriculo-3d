@@ -81,6 +81,9 @@ cima, no carregamento, por `applyPageLanguage()` em `src/i18n.js`.
 }
 ```
 
+Luz própria de uma estação é filha direta do `group` e tem `distance`, para não alcançar as cenas
+vizinhas. O `Stage` a mantém acesa mesmo com a estação escondida (ver [Armadilhas](#armadilhas)).
+
 ## Estrutura
 
 ```
@@ -88,10 +91,10 @@ index.html            todo o texto do currículo (fonte única do conteúdo)
 src/i18n.js           língua da página, tr() das cenas e o dicionário EN do HTML
 src/main.js           scroll → progress, pontos de navegação, botões, seletor de língua, carga do 3D
 src/wheel-step.js     um gesto de roda/trackpad = um tópico (desktop)
-src/stage.js          renderer, bloom, câmera guiada pelo scroll, picking e tooltip
+src/stage.js          renderer, bloom, câmera guiada pelo scroll, picking, tooltip e aquecimento das cenas
 src/lib/progress.js   matemática pura do scroll (testada em tests/)
 src/lib/language.js   escolha da língua, pura (testada em tests/)
-src/lib/kit.js        cores, rótulos, caixas com borda, tubos e Flow (mensagens nos tubos)
+src/lib/kit.js        cores, rótulos, caixas com borda, tubos, Flow (mensagens nos tubos) e texturas de canvas
 src/stations/*.js     uma cena por arquivo (partes grandes à parte: magalu-logistics, privacy-cascade,
                       llm-vignettes, origins-details com os detalhes de cada objeto da bancada,
                       porto-station com as estações em arco do pipeline de emissão)
@@ -158,6 +161,28 @@ Node do `mise.toml`, roda os testes, faz o build e publica o `dist/`.
   desce até os botões. Botão novo dentro de `.card` ganha esse comportamento sozinho.
 - ⚠️ Os rótulos das estações fora de foco são escondidos por classe CSS (`muted-by-stage`), não por
   `visible`. As estações também mexem em `visible` dos próprios objetos, e as duas coisas brigariam.
+- ⚠️ Texto e telas desenhados em canvas usam `canvasTexture()` do `kit.js`, e não `THREE.CanvasTexture`
+  com `colorSpace` sRGB. No Chrome, subir um canvas direto para uma textura sRGB custa cerca de 25 ms de
+  GPU por atualização (medido num painel de 1280×800; para uma textura RGBA comum são 0,3 ms). Os
+  painéis de LLM redesenham 20 vezes por segundo e o terminal da Porto até 45: as duas cenas perdiam
+  quadros o tempo todo. O `canvasTexture()` sobe o canvas para uma textura comum e copia para a sRGB na
+  GPU, com os mesmos texels. `texture.needsUpdate = true` continua sendo o aviso de que o canvas mudou;
+  quem faz a cópia é o `Stage` (`flushCanvasTextures`), uma vez por quadro, antes de desenhar.
+- ⚠️ `Stage.warmUp()` prepara cada estação antes de ela aparecer: compila os shaders em segundo plano e
+  desenha a estação uma vez num buffer descartável, com tudo visível. Sem isso o three.js compila cada
+  shader na primeira vez que o objeto é desenhado, que é no meio do voo da câmera: eram de 50 a 350 ms
+  de imagem parada a cada cena nova. O aquecimento só cobre o que existe quando ele roda. Material
+  criado depois, ou que muda `transparent`, `map`, `side` ou `defines` durante a animação, volta a
+  compilar na hora. Crie os materiais na construção da estação e anime só valores (cor, opacidade,
+  `emissiveIntensity`).
+- ⚠️ O número de luzes faz parte de cada shader iluminado. Uma luz que aparece ou some recompila todos
+  os materiais iluminados à vista: a lâmpada da bancada, que sumia junto com a estação, travava a
+  chegada em "De onde eu vim" por cerca de 350 ms. Por isso o `Stage` tira as luzes de dentro do
+  `group` e as deixa num grupo sempre visível, na mesma posição. Para apagar uma luz, zere a
+  `intensity`; não mexa em `visible` nem crie luz depois da construção.
+- ⚠️ O `antialias` do renderer fica desligado de propósito. A cena é desenhada nos buffers do
+  `EffectComposer`, então o antialias do canvas só multiplicaria a memória do quadro final, sem
+  suavizar nada. Se a cena precisar de antialias, ele entra no composer (`samples` do render target).
 
 ## Rótulos ilustrativos
 

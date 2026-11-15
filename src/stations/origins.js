@@ -1,7 +1,7 @@
 // Origins scene: a workbench with one object per phase, lit up in chronological order. Hovering an object
 // (or its line in the card's timeline) jumps to it; otherwise the spotlight walks the desk on its own.
 import * as THREE from "three";
-import { COLORS, glow, label, pickable, damp, roundedBox, outline } from "../lib/kit.js";
+import { COLORS, glow, label, pickable, damp, roundedBox, outline, canvasTexture } from "../lib/kit.js";
 import { tr } from "../i18n.js";
 import * as details from "./origins-details.js";
 
@@ -35,9 +35,7 @@ function screen(pxW, pxH, w, h) {
   canvas.width = pxW;
   canvas.height = pxH;
   const ctx = canvas.getContext("2d");
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
+  const texture = canvasTexture(canvas);
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: texture, toneMapped: false }));
   return { mesh, ctx, texture };
 }

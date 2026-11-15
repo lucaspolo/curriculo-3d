@@ -2,6 +2,7 @@
 import * as THREE from "three";
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 
 export const COLORS = {
   kafka: 0x2de2c5,
@@ -25,6 +26,74 @@ export function label(text, className = "") {
   el.className = `label ${className}`.trim();
   el.textContent = text;
   return new CSS2DObject(el);
+}
+
+const repainted = new Set();
+let copier = null;
+
+/**
+ * Texture fed by a 2D canvas, used like a CanvasTexture: paint the canvas, then set
+ * `texture.needsUpdate = true`. It is sRGB with mipmaps, as a CanvasTexture would be, but gets to the GPU
+ * another way: uploading a canvas straight into an sRGB texture takes Chrome about 25 ms of GPU time for
+ * a 1280×800 panel, against 0.3 ms into a plain RGBA one (measured on Chrome 156; three.js works around
+ * the same slow path for video in mrdoob/three.js#26516). So the canvas goes into a plain texture and one
+ * draw copies it into the sRGB one, with the same texels in the end. The Stage runs the pending copies
+ * once per frame (flushCanvasTextures).
+ */
+export function canvasTexture(canvas, { anisotropy = 4 } = {}) {
+  const source = new THREE.CanvasTexture(canvas);
+  source.generateMipmaps = false;
+  source.minFilter = source.magFilter = THREE.NearestFilter;
+  const target = new THREE.WebGLRenderTarget(canvas.width, canvas.height, {
+    colorSpace: THREE.SRGBColorSpace,
+    generateMipmaps: true,
+    minFilter: THREE.LinearMipmapLinearFilter,
+    anisotropy,
+    depthBuffer: false,
+  });
+  const entry = { source, target };
+  // A render target's texture ignores needsUpdate, so here it queues the copy instead.
+  Object.defineProperty(target.texture, "needsUpdate", { set: (value) => value && repainted.add(entry) });
+  repainted.add(entry);
+  return target.texture;
+}
+
+/** Copies every canvas repainted since the last call into its texture. */
+export function flushCanvasTextures(renderer) {
+  if (repainted.size === 0) return;
+  copier ??= new FullScreenQuad(
+    new THREE.ShaderMaterial({
+      uniforms: { map: { value: null } },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = vec4(position.xy, 0.0, 1.0);
+        }`,
+      fragmentShader: `
+        uniform sampler2D map;
+        varying vec2 vUv;
+        void main() {
+          vec4 texel = texture2D(map, vUv);
+          // The canvas holds sRGB values and the target encodes to sRGB on write, so pass the linear ones.
+          vec3 low = texel.rgb / 12.92;
+          vec3 high = pow((texel.rgb + 0.055) / 1.055, vec3(2.4));
+          gl_FragColor = vec4(mix(low, high, step(vec3(0.04045), texel.rgb)), texel.a);
+        }`,
+      depthTest: false,
+      depthWrite: false,
+      blending: THREE.NoBlending,
+    }),
+  );
+  const previous = renderer.getRenderTarget();
+  for (const { source, target } of repainted) {
+    source.needsUpdate = true;
+    copier.material.uniforms.map.value = source;
+    renderer.setRenderTarget(target);
+    copier.render(renderer);
+  }
+  repainted.clear();
+  renderer.setRenderTarget(previous);
 }
 
 const roundedCache = new Map();

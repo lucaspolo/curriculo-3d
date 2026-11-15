@@ -6,7 +6,7 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 import { travel, focusOf } from "./lib/progress.js";
-import { damp } from "./lib/kit.js";
+import { damp, flushCanvasTextures } from "./lib/kit.js";
 
 const SPACING = 80;
 const ZERO = new THREE.Vector3();
@@ -26,7 +26,9 @@ export class Stage {
     this.reducedMotion = reducedMotion;
     this.progress = 0;
 
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+    // No antialias on the canvas: the scene is drawn into the composer's buffers, so it would only
+    // multisample the final full-screen copy, for nothing.
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance" });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
@@ -53,6 +55,15 @@ export class Stage {
     stations.forEach((s, i) => {
       s.group.position.copy(s.place ?? new THREE.Vector3(i * SPACING, 0, 0));
       this.scene.add(s.group);
+      // A station's lights stay lit while it is hidden. Every lit shader is compiled for an exact number of
+      // lights, so a lamp that came and went with its station would recompile them all in mid-scroll.
+      const lights = s.group.children.filter((o) => o.isLight);
+      if (lights.length > 0) {
+        const always = new THREE.Group();
+        always.position.copy(s.group.position);
+        always.add(...lights);
+        this.scene.add(always);
+      }
       s.labels = [];
       s.group.traverse((o) => o.isCSS2DObject && s.labels.push(o.element));
       s.labelsShown = true;
@@ -82,6 +93,56 @@ export class Stage {
     this.clock = new THREE.Clock();
     this.time = 0;
     this.renderer.setAnimationLoop(() => this.frame());
+    // After the first frame, so its own shaders do not queue behind the ones compiled ahead of time.
+    requestAnimationFrame(() => this.warmUp());
+  }
+
+  /**
+   * Gets every station ready to draw while the visitor is still reading. Left alone, three.js compiles a
+   * shader and uploads a buffer the first time each object is drawn, which is in the middle of the camera's
+   * flight to a new scene: the picture freezes for tens to hundreds of milliseconds.
+   */
+  async warmUp() {
+    // Same kind of buffer as the composer's, so the shader variants are the ones the real frames use.
+    const scratch = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType });
+    const pending = this.stations.filter((s) => s.group.children.length > 0);
+    while (pending.length > 0) {
+      // Nearest to where the visitor is now: the next stop is always the first one ready.
+      const distance = (s) => Math.abs(this.stations.indexOf(s) - this.progress);
+      pending.sort((a, b) => distance(a) - distance(b));
+      const station = pending.shift();
+      // Shaders compile on the driver's threads; the page keeps running meanwhile.
+      this.renderer.setRenderTarget(scratch);
+      const compiled = this.renderer.compileAsync(station.group, this.camera, this.scene);
+      this.renderer.setRenderTarget(null);
+      await compiled;
+      // The first draw still takes a few milliseconds, so it waits for a frame with the camera at rest.
+      do {
+        await new Promise(requestAnimationFrame);
+      } while (this.flying);
+      this.drawOnce(station, scratch);
+    }
+    scratch.dispose();
+  }
+
+  /** Draws everything in one station into a throwaway buffer, so its first real frame has nothing to set up. */
+  drawOnce(station, buffer) {
+    const restore = [];
+    const set = (object, key, value) => {
+      restore.push([object, key, object[key]]);
+      object[key] = value;
+    };
+    this.stations.forEach((s) => set(s.group, "visible", s === station));
+    station.group.traverse((o) => {
+      // Objects still hidden or out of the camera's view count too: they show up later, mid-animation.
+      set(o, "visible", true);
+      set(o, "frustumCulled", false);
+      if (o.isInstancedMesh && o.count === 0) set(o, "count", 1);
+    });
+    this.renderer.setRenderTarget(buffer);
+    this.renderer.render(this.scene, this.camera);
+    this.renderer.setRenderTarget(null);
+    restore.reverse().forEach(([object, key, value]) => (object[key] = value));
   }
 
   addBackdrop() {
@@ -192,6 +253,7 @@ export class Stage {
     this.time += sdt;
 
     const { from, to, t } = travel(this.progress);
+    this.flying = t > 0 && t < 1;
     const a = this.stations[from].views;
     const b = (this.stations[to] ?? this.stations[from]).views;
     const [posKey, targetKey] = this.narrow ? ["narrowPos", "narrowTarget"] : ["pos", "target"];
@@ -242,6 +304,7 @@ export class Stage {
       }
     });
 
+    flushCanvasTextures(this.renderer);
     this.composer.render();
     this.labelRenderer.render(this.scene, this.camera);
   }

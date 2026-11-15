@@ -2,7 +2,7 @@
 // Dr. Victor Frankenstein for child support, goes through classification, NER, LLM disambiguation and
 // anonymization. Background: the same pipeline at scale (privacy-cascade.js).
 import * as THREE from "three";
-import { COLORS, glow, label, pickable } from "../lib/kit.js";
+import { COLORS, glow, label, pickable, canvasTexture } from "../lib/kit.js";
 import { tr, locale } from "../i18n.js";
 import { createCascade } from "./privacy-cascade.js";
 
@@ -212,9 +212,7 @@ export function createPrivacy() {
   canvas.width = CW;
   canvas.height = CH;
   const ctx = canvas.getContext("2d");
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
+  const texture = canvasTexture(canvas);
   // Not tone mapped and kept below the bloom threshold, so the paper reads as paper and the text stays crisp.
   const paper = new THREE.Mesh(
     new THREE.PlaneGeometry(PAGE_W, PAGE_H),

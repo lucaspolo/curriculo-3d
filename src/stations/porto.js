@@ -1,7 +1,7 @@
 // Porto Seguro scene: the policy issuance pipeline. A customer drives up, hands in the proposal, follows it
 // through the stages and drives off with the issued policy. Informix and Oracle answer every stage.
 import * as THREE from "three";
-import { COLORS, glow, label, pickable, Flow, roundedBox, outline, outlineMaterial, damp } from "../lib/kit.js";
+import { COLORS, glow, label, pickable, Flow, roundedBox, outline, outlineMaterial, damp, canvasTexture } from "../lib/kit.js";
 import { tr, locale } from "../i18n.js";
 import { makeStation } from "./porto-station.js";
 
@@ -109,8 +109,7 @@ function makeTerminal() {
   canvas.width = 1024;
   canvas.height = 512;
   const ctx = canvas.getContext("2d");
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
+  const texture = canvasTexture(canvas, { anisotropy: 1 });
   const screen = new THREE.Mesh(
     new THREE.PlaneGeometry(8, 4),
     new THREE.MeshBasicMaterial({ map: texture, toneMapped: false }),

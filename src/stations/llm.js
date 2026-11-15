@@ -1,7 +1,7 @@
 // LLM scene: one model serving three fronts, each shown as a concrete vignette (llm-vignettes.js).
 // The card has tabs; the camera slides between the panels and cycles on its own when left alone.
 import * as THREE from "three";
-import { COLORS, glow, label, pickable, Flow, damp, outlinedBox } from "../lib/kit.js";
+import { COLORS, glow, label, pickable, Flow, damp, outlinedBox, canvasTexture } from "../lib/kit.js";
 import { tr, locale } from "../i18n.js";
 import { CW, CH, VIGNETTES, TOOLS } from "./llm-vignettes.js";
 
@@ -44,9 +44,7 @@ function makePanel(i) {
   canvas.width = CW;
   canvas.height = CH;
   const ctx = canvas.getContext("2d");
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
+  const texture = canvasTexture(canvas);
   const geo = new THREE.PlaneGeometry(PANEL_W, PANEL_H);
   // Not tone mapped and kept below the bloom threshold, so the text stays crisp.
   const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: texture, toneMapped: false }));
