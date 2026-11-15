@@ -16,7 +16,7 @@ const SPAWN_EVERY = 4.2;
 const POOL = 6;
 
 // The profile mentions receiving the proposal and issuing the policy; the middle stages are illustrative.
-const STAGES = [
+export const STAGES = [
   {
     name: tr("Proposta recebida", "Proposal received"),
     short: tr("Proposta", "Proposal"),
@@ -58,20 +58,20 @@ const STAGES = [
   },
 ];
 
-const DATABASES = [
+export const DATABASES = [
   { name: "Informix", x: -6, color: COLORS.k8s },
   { name: "Oracle", x: 6, color: COLORS.danger },
 ];
 
 const CAR_COLORS = [COLORS.kafka, COLORS.message, COLORS.privacy, COLORS.k8s, COLORS.llm, COLORS.warn];
-const RISK = [
+export const RISK = [
   [tr("baixo", "low"), COLORS.ok, -0.9],
   [tr("médio", "medium"), COLORS.warn, 0],
   [tr("baixo", "low"), COLORS.ok, -0.6],
   [tr("moderado", "moderate"), COLORS.message, 0.5],
 ];
 
-const SNIPPETS = [
+export const SNIPPETS = [
   {
     title: "Informix 4GL",
     lines: [

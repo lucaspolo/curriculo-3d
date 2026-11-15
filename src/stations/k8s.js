@@ -10,7 +10,7 @@ const INGRESS = new THREE.Vector3(0, 1.2, 10.5);
 const PENDING = 1.1; // seconds from scheduled to ready
 const VERSION_COLORS = [COLORS.k8s, COLORS.llm, COLORS.kafka, COLORS.message];
 
-const NAMESPACES = [
+export const NAMESPACES = [
   { key: "front", z: 6.5, color: COLORS.kafka, min: 2, max: 6, text: tr("Front-ends em Next.js. Escalam com o número de requisições.", "Next.js front ends. They scale with the number of requests."),
   },
   { key: "api", z: 2.5, color: COLORS.k8s, min: 3, max: 9, text: tr("Serviços com milhões de requisições por dia. Escalam com a carga.", "Services handling millions of requests a day. They scale with load."),

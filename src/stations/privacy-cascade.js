@@ -10,13 +10,13 @@ const SPEED = 5;
 const RATE = 16; // documents per second at full focus
 const MAX = 260;
 
-const LANES = [
+export const LANES = [
   { key: "clean", name: tr("sem dados pessoais", "no personal data"), share: 0.6, color: 0x7d8fb0, y: 7.2 },
   { key: "ner", name: tr("anonimizados pelo NER", "anonymized by NER"), share: 0.34, color: COLORS.privacy, y: 3.6 },
   { key: "llm", name: tr("decididos pelo LLM", "decided by the LLM"), share: 0.06, color: COLORS.llm, y: 0.4 },
 ];
 
-const GATES = [
+export const GATES = [
   {
     name: tr("Classificação", "Classification"),
     x: 6,

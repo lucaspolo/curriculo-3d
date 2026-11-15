@@ -19,7 +19,7 @@ const FRONT_ROAD = [
   [-1.5, 13.3],
   [-6.5, 12.3],
 ];
-const DESTINATIONS = [
+export const DESTINATIONS = [
   { name: tr("entrega · região A", "delivery · region A"), at: [-3.5, 14.2], via: [[-1.5, 13.3]] },
   { name: tr("entrega · região B", "delivery · region B"), at: [-11, 9], via: [...FRONT_ROAD, [-10, 9.8]] },
   { name: tr("entrega · região C", "delivery · region C"), at: [-14.5, 1], via: [...FRONT_ROAD, [-11, 8.5], [-13.8, 4]] },

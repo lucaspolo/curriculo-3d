@@ -15,7 +15,7 @@ const CORE = new THREE.Vector3(0, 9.6, -8);
 const MANUAL_PAUSE = 25; // seconds without auto-cycling after a tab click
 const REDRAW_FPS = 20;
 
-const INFO = [
+export const INFO = [
   {
     title: tr("LLM no pipeline de ingestão", "LLM in the ingestion pipeline"),
     text: tr(

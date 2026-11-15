@@ -15,7 +15,7 @@ const COLUMNS = [-6, -2, 2, 6];
 const TIMELINE_Z = DESK_D / 2 - 0.45;
 
 // Real titles from blog.lucaspolo.dev.
-const POSTS = [
+export const POSTS = [
   "Criando ciclos - A maneira abrangente",
   "Um pouco sobre cálculo lambda",
   "O problema de Monty Hall e como estatística não é algo intuitivo",
@@ -626,7 +626,7 @@ function justiceScale() {
   };
 }
 
-const OBJECTS = [
+export const OBJECTS = [
   // Front row
   { year: "2006", short: tr("Técnico em programação", "Programming technician"), col: 0, row: 0, build: books,
     details: details.booksDetails, text: tr("Técnico em programação no IFSP: o primeiro contato com lógica e código.", "Programming technician course at IFSP: my first contact with logic and code.") },

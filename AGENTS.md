@@ -89,7 +89,9 @@ vizinhas. O `Stage` a mantém acesa mesmo com a estação escondida (ver [Armadi
 ```
 index.html            todo o texto do currículo (fonte única do conteúdo)
 src/i18n.js           língua da página, tr() das cenas e o dicionário EN do HTML
-src/main.js           scroll → progress, pontos de navegação, botões, seletor de língua, carga do 3D
+src/main.js           entrada da primeira versão: fontes, estilos e as cenas dela
+src/app.js            scroll → progress, pontos de navegação, botões, seletor de língua, carga do 3D
+                      (era o conteúdo do main.js; saiu de lá para a /v2 usar o mesmo código)
 src/wheel-step.js     um gesto de roda/trackpad = um tópico (desktop)
 src/stage.js          renderer, bloom, câmera guiada pelo scroll, picking, tooltip e aquecimento das cenas
 src/lib/progress.js   matemática pura do scroll (testada em tests/)
@@ -97,7 +99,8 @@ src/lib/language.js   escolha da língua, pura (testada em tests/)
 src/lib/kit.js        cores, rótulos, caixas com borda, tubos, Flow (mensagens nos tubos) e texturas de canvas
 src/stations/*.js     uma cena por arquivo (partes grandes à parte: magalu-logistics, privacy-cascade,
                       llm-vignettes, origins-details com os detalhes de cada objeto da bancada,
-                      porto-station com as estações em arco do pipeline de emissão)
+                      porto-station com as estações em arco do pipeline de emissão, privacy-page com o
+                      texto e o desenho da petição, privacy-filing com a história contada sobre ela)
 tests/                node --test
 ```
 
@@ -128,14 +131,14 @@ Node do `mise.toml`, roda os testes, faz o build e publica o `dist/`.
   geometria e, com culling ligado, somem quando a câmera se mexe.
 - ⚠️ O deslocamento da cena para o lado do card usa `camera.setViewOffset`, e não um alvo deslocado.
   Assim o raycaster continua acertando os objetos sob o mouse. No desktop, o espaço livre é medido no
-  DOM (`freeArea()` em `main.js`: da borda do card até os pontos de navegação). Uma estimativa fixa
+  DOM (`freeArea()` em `app.js`: da borda do card até os pontos de navegação). Uma estimativa fixa
   funcionava em 1920px, mas em janelas de ~1100px a cena ficava atrás do card. Quando sobra menos
   espaço, a câmera recua (`DESKTOP_ASPECT` em `stage.js`).
 - ⚠️ O breakpoint de 800px está em três lugares: `styles.css`, `Stage.resize()` e `narrow()` em
-  `main.js`. Se mudar um deles sem mudar os outros, no celular a câmera para com a cena atrás do card.
+  `app.js`. Se mudar um deles sem mudar os outros, no celular a câmera para com a cena atrás do card.
 - ⚠️ No celular a estação "chega" quando o topo do card atinge 58% da tela, e não quando a seção está
   centralizada. Com a regra do desktop, o card cobre a cena. O valor fica só em `--read-line`, no
-  `styles.css`: o scroll snap usa ele no `scroll-margin-top` do card e o `main.js` lê o mesmo valor.
+  `styles.css`: o scroll snap usa ele no `scroll-margin-top` do card e o `app.js` lê o mesmo valor.
   Se os dois divergirem, o snap para num ponto e a câmera espera outro.
 - ⚠️ A rolagem para em um tópico por gesto, em duas camadas. A primeira é o CSS:
   `scroll-snap-type: y mandatory` com `scroll-snap-stop: always`, e vale para toque, teclado e barra
@@ -156,7 +159,7 @@ Node do `mise.toml`, roda os testes, faz o build e publica o `dist/`.
   nos cantos. As geometrias do `roundedBox()` são compartilhadas por cache: use `.clone()` antes de
   `translate()`, senão todos os objetos do mesmo tamanho se deslocam juntos. Caixas de vidro
   (estágios da Porto, portais da cascata, enclosures do Kafka) continuam com arestas de propósito.
-- ⚠️ No celular, tocar em qualquer botão de um card (`revealScene()` em `main.js`) rola de volta até o
+- ⚠️ No celular, tocar em qualquer botão de um card (`revealScene()` em `app.js`) rola de volta até o
   ponto em que o topo do card fica na linha de leitura, porque o card cobre a cena quando a pessoa
   desce até os botões. Botão novo dentro de `.card` ganha esse comportamento sozinho.
 - ⚠️ Os rótulos das estações fora de foco são escondidos por classe CSS (`muted-by-stage`), não por

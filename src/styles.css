@@ -13,7 +13,7 @@
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  /* Phone only: fraction of the screen height where a card's top edge stops. main.js reads it too. */
+  /* Phone only: fraction of the screen height where a card's top edge stops. app.js reads it too. */
   --read-line: 0.58;
 }
 

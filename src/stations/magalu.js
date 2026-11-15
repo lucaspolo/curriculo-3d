@@ -10,7 +10,7 @@ const BASE_RATE = 7;
 const PEAK_FACTOR = 6;
 const ORDER_RATE = 0.3; // share of quotes that turn into an order
 
-const PARTNERS = [
+export const PARTNERS = [
   { name: "Correios", pos: [-12, 1.2, -6], text: tr(
       "Cotação e postagem. A integração tem retentativa e fallback quando o parceiro oscila.",
       "Quotes and shipping. The integration retries and falls back when the partner is unstable.",

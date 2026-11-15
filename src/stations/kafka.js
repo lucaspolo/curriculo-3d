@@ -14,14 +14,14 @@ const PROCESSING = 0.25; // seconds a stage holds a message before publishing do
 
 // Topic names are illustrative; the profile describes the stages, not the topic layout.
 // dir is the direction messages travel through the log: the bottom row flows right to left.
-const TOPICS = [
+export const TOPICS = [
   { name: tr("processos.brutos", "cases.raw"), x: -8, y: ROW_A, dir: 1, color: COLORS.message },
   { name: tr("processos.normalizados", "cases.normalized"), x: 8, y: ROW_A, dir: 1, color: COLORS.kafka },
   { name: tr("processos.classificados", "cases.classified"), x: 8, y: ROW_B, dir: -1, color: COLORS.warn },
   { name: tr("processos.publicados", "cases.published"), x: -8, y: ROW_B, dir: -1, color: COLORS.ok },
 ];
 
-const STAGES = [
+export const STAGES = [
   {
     name: tr("Normalização", "Normalization"),
     x: 0,
@@ -54,7 +54,7 @@ const STAGES = [
   },
 ];
 
-const SINK = {
+export const SINK = {
   name: tr("Plataforma", "Platform"),
   x: -16.5,
   y: ROW_B,
@@ -65,13 +65,13 @@ const SINK = {
   ),
 };
 
-const PRODUCERS = [
+export const PRODUCERS = [
   { name: tr("Tribunais", "Courts"), y: ROW_A + 2 },
   { name: tr("Diários oficiais", "Official gazettes"), y: ROW_A },
   { name: tr("Documentos", "Documents"), y: ROW_A - 2 },
 ].map((p) => ({ ...p, x: -16.5 }));
 
-const DAG = [
+export const DAG = [
   { name: tr("extrair", "extract"), pos: [-7, 11], deps: [], step: 0 },
   { name: tr("normalizar", "normalize"), pos: [-2.5, 12.7], deps: [0], step: 1 },
   { name: tr("classificar", "classify"), pos: [-2.5, 9.3], deps: [0], step: 1 },
