@@ -15,6 +15,9 @@
     <div id="labels" aria-hidden="true"></div>
     <div id="tooltip" role="status" hidden></div>
 
+    <!-- Everything between content:start and content:end is the resume itself. /v2 shows this same block
+         with another look (vite.config.js copies it into v2/index.html), so the text lives only here. -->
+    <!-- content:start -->
     <!-- Portuguese is written here; src/i18n.js swaps in English by the data-i18n* keys. -->
     <div class="lang" role="group" aria-label="Idioma / Language">
       <a href="?lang=pt" data-lang="pt" hreflang="pt-BR" lang="pt-BR">PT</a>
@@ -252,6 +255,7 @@
         <span lang="en">The animations need JavaScript; the résumé above is still complete.</span>
       </p>
     </noscript>
+    <!-- content:end -->
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

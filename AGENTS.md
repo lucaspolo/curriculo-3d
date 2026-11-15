@@ -4,6 +4,9 @@ Currículo interativo do Lucas Polo em three.js. A página rola por "estações"
 profissional vira uma cena animada (Kafka, Trust & Privacy, LLMs, Kubernetes, Magalu, Porto Seguro,
 origens) e termina num card de contato.
 
+Há duas versões com o mesmo conteúdo: a primeira (raiz, publicada) e uma em voxel em `/v2`, em
+avaliação (ver [Versão em voxel](#versão-em-voxel-v2)).
+
 O conteúdo foi tirado do LinkedIn (`linkedin.com/in/lucaspolo`) em 21/10/2026. Ao atualizar o
 currículo, atualize o texto em `index.html` **e** a versão em inglês em `src/i18n.js` (ver
 [Idiomas](#idiomas)) e, se mudar algo que aparece nas cenas (nomes de serviços, anos da linha do
@@ -87,7 +90,7 @@ vizinhas. O `Stage` a mantém acesa mesmo com a estação escondida (ver [Armadi
 ## Estrutura
 
 ```
-index.html            todo o texto do currículo (fonte única do conteúdo)
+index.html            todo o texto do currículo (fonte única do conteúdo, também para a /v2)
 src/i18n.js           língua da página, tr() das cenas e o dicionário EN do HTML
 src/main.js           entrada da primeira versão: fontes, estilos e as cenas dela
 src/app.js            scroll → progress, pontos de navegação, botões, seletor de língua, carga do 3D
@@ -101,13 +104,14 @@ src/stations/*.js     uma cena por arquivo (partes grandes à parte: magalu-logi
                       llm-vignettes, origins-details com os detalhes de cada objeto da bancada,
                       porto-station com as estações em arco do pipeline de emissão, privacy-page com o
                       texto e o desenho da petição, privacy-filing com a história contada sobre ela)
+v2/                   a versão em voxel (ver "Versão em voxel")
 tests/                node --test
 ```
 
 ## Comandos
 
 ```bash
-npm run dev       # http://localhost:5174
+npm run dev       # http://localhost:5174 (a versão em voxel fica em http://localhost:5174/v2/)
 npm test          # testes da matemática de scroll e da escolha de língua
 npm run build     # gera dist/ com base relativa, publicável em qualquer subpasta
 ```
@@ -122,6 +126,61 @@ Node do `mise.toml`, roda os testes, faz o build e publica o `dist/`.
   arquivo `CNAME`: com o Pages publicado por Actions, esse arquivo é ignorado.
 - O DNS de `sobre.lucaspolo.dev` é um registro CNAME apontando para `lucaspolo.github.io`. Se
   remover o domínio do Pages sem apagar o registro, o subdomínio fica vulnerável a takeover.
+
+## Versão em voxel (`/v2`)
+
+Segunda versão do site, criada em 14/11/2026 para o Lucas avaliar: as mesmas informações, com outro
+visual. Em vez de neon sobre fundo escuro, é dia claro: ilhas de voxel num mar turquesa, sol com
+sombras, cards claros. **Ainda não é publicada.** O `npm run build` só gera a primeira versão; para
+publicar a `/v2`, inclua `v2/index.html` em `build.rollupOptions.input` no `vite.config.js` (o build
+com as duas páginas já foi testado e funciona).
+
+```
+v2/index.html          só a casca: o conteúdo vem do index.html da raiz
+v2/src/main.js         entrada: fontes, estilos da v2 e boot() de src/app.js
+v2/src/styles.css      visual claro; as regras de layout são as da primeira versão
+v2/src/stage.js        renderer sem bloom, sol com sombras, e a mesma câmera de src/stage.js
+v2/src/world.js        céu, sol, mar, nuvens, ilhas, árvores e palmeiras
+v2/src/lib/voxel.js    Vox (grade de voxels) e o gerador de malha com oclusão nos vértices
+v2/src/lib/kit.js      paleta, Flow (cubos nas curvas) e os utilitários reaproveitados de src/lib/kit.js
+v2/src/stations/*.js   uma ilha por estação, com o mesmo contrato da primeira versão
+```
+
+O que a v2 reaproveita de `src/`, para nada existir em dois lugares:
+
+- **Texto do currículo:** o plugin `contentFromIndex` (`vite.config.js`) copia para a página da v2 o
+  bloco entre `<!-- content:start -->` e `<!-- content:end -->` do `index.html`, mais o título e a
+  descrição. O dicionário EN é o mesmo, porque as chaves `data-i18n` são as mesmas.
+- **Comportamento da página:** `src/app.js`, `src/wheel-step.js`, `src/lib/progress.js` e `src/i18n.js`.
+- **Conteúdo das cenas:** as listas de nomes e textos exportadas pelas cenas da primeira versão
+  (`TOPICS`, `STAGES`, `NAMESPACES`, `PARTNERS`, `OBJECTS`, `POSTS`, `SNIPPETS` etc.), as vinhetas de
+  LLM (`llm-vignettes.js`) e a petição com toda a sua história (`privacy-page.js` e
+  `privacy-filing.js`). Tudo o que está em [Rótulos ilustrativos](#rótulos-ilustrativos) vale igual.
+- **Utilitários:** `label`, `pickable`, `damp` e `canvasTexture` de `src/lib/kit.js`.
+
+Próprias da v2, e também ilustrativas: as casas como clientes e o pátio de contêineres como cluster,
+o moinho como Airflow, o robô como LLM.
+
+- ⚠️ Não escreva texto em `v2/index.html`. Ele some na próxima vez que alguém atualizar o currículo só
+  no `index.html`, que é onde o AGENTS manda atualizar. Se os marcadores `content:start`/`content:end`
+  saírem do `index.html`, a v2 abre sem conteúdo nenhum.
+- ⚠️ A abertura e o fim da v2 também não têm cena, pela mesma decisão do Lucas: só céu, sol e mar
+  atrás do card, com as nuvens paradas e acima do texto. Não coloque ilha, objeto nem animação ali.
+- ⚠️ Todo voxel tem o mesmo tamanho (`V` em `voxel.js`, 0,25). Misturar tamanhos numa cena quebra a
+  leitura de "feito de blocos"; só as nuvens, que são fundo distante, usam voxels maiores.
+- ⚠️ As malhas de voxel dividem um único material (`VOXEL`), com a cor e a oclusão gravadas nos
+  vértices. O que muda de cor durante a animação é feito de outro jeito: um modelo quase branco com
+  material próprio, tingido por `material.color` (pods, carros da Porto, casas do Magalu), ou uma
+  pecinha com `lamp()` (lâmpadas, barras de progresso). Mudar `VOXEL.color` tinge todas as cenas.
+- ⚠️ O aquecimento da v2 (`Stage.drawOnce`) desenha no próprio canvas, num canto de 8 pixels, logo
+  antes do quadro de verdade. Na primeira versão ele vai para um buffer à parte, mas lá a cena inteira
+  é desenhada num buffer; aqui os shaders são compilados para a saída do canvas, e aquecer em outro
+  buffer compilaria as variantes erradas (a travada na primeira visita voltaria).
+- ⚠️ O breakpoint de 800px, que já estava em três lugares, está também em `v2/src/styles.css` e em
+  `Stage.resize()` de `v2/src/stage.js`. A câmera da v2 foi copiada de `src/stage.js`: correção feita
+  numa (enquadramento, `setViewOffset`, picking) precisa ir para a outra.
+- ⚠️ A petição fica 1 voxel à frente do cavalete (`easel()` em `v2/src/stations/privacy.js`). Encostada
+  nele, as duas superfícies disputam a profundidade e a folha aparece riscada.
 
 ## Armadilhas
 
